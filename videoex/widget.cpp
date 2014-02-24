@@ -16,179 +16,69 @@ Widget::Widget(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    //Register all of the codecs from FFMPEG
     av_register_all();
-
-
-    const char* filename = "C:\\Users\\Rene\\Desktop\\Test.mp2";
 
     AVDictionary *optionsDict = NULL;
 
-    // "C:\\Users\\Rene\\Desktop\\silence.mp3" "C:\\Users\\Rene\\Desktop\\apollo_17_stroll.mpg"
-
-    if(avformat_open_input(&formCtx,"C:\\Users\\Rene\\Desktop\\AstroWithBlack.mpg",NULL,NULL) != 0){
+    //Open a video file and fill formCtx with its AVFormatContext
+    if(avformat_open_input(&formCtx,"C:\\Users\\Rene\\Desktop\\apollo_17_stroll.mpg",NULL,NULL) != 0){
         qDebug() << "Did not open video";
     }
 
-
-
+    //Find the stream info for the opened file
     if(avformat_find_stream_info(formCtx,NULL) < 0){
         qDebug() << "Couldn't find stream info";
     }
-    //apollo_17_stroll.mpg
+
 
     //debugging info on video and stream
-    av_dump_format(formCtx,0,"C:\\Users\\Rene\\Desktop\\AstroWithBlack.mpg",0);
+    av_dump_format(formCtx,0,"C:\\Users\\Rene\\Desktop\\apollo_17_stroll.mpg",0);
 
-    qDebug() << "Show me the money";
-
-
-    ui->horizontalSlider->setRange(0,(int)formCtx->duration/30000);
 
    streamIndex = -1;
    svIndex = -1;
+
+   //Find the best Audio and Video stream
    streamIndex = av_find_best_stream(formCtx,AVMEDIA_TYPE_AUDIO,-1,-1,&pCodec,0);
    svIndex = av_find_best_stream(formCtx,AVMEDIA_TYPE_VIDEO,-1,-1,&vCodec,0);
 
     if(streamIndex > 0){
-
+          //Set the Audio stream to the Audio stream found in the format context
           audioStream = formCtx->streams[streamIndex];
-          //pCodecCtx = audioStream->codec;
-        //  pCodecCtx->codec = pCodec;
 
-
-        //qDebug() << "Could not find audio stream in video";
     }
 
     if(svIndex > 0){
+
+        //Ser the Video stream to the Video stream found in the format context
         videoStream = formCtx->streams[svIndex];
+
+        //Set the Codec Context codec to the codec found in the video steam
         vCodecCtx = videoStream->codec;
         vCodecCtx->codec = vCodec;
-        QRect rect;
-        //rect.setHeight(vCodecCtx->height);
-       // rect.setWidth(vCodecCtx->width);
 
+
+        //Create QRect object, set height and width of object to match dimensions of video
+        QRect rect;
         rect.setHeight(vCodecCtx->height);
         rect.setWidth(vCodecCtx->width);
 
+        //Set label to match the dimensions of the video
         ui->imageLab->setGeometry(rect);
-
-       // qDebug() << "Could not open video stream in video";
     }
 
-
-
-   // if(avcodec_open2(pCodecCtx,pCodec,&optionsDict) < 0)
-   //     qDebug() << "Couldn't open audio Codec";
-
-   // if(avcodec_open2(vCodecCtx,vCodec,&optionsDict) < 0)
-   //     qDebug() << "Couldn't open video codec";
-
-  //  qDebug() << "This stream has " << pCodecCtx->channels << " channels and a sample rate of " << pCodecCtx->sample_rate << "Hz";
-  //  qDebug() << "The data is in the format " << av_get_sample_fmt_name(pCodecCtx->sample_fmt);
-
-  //  eCodec = avcodec_find_encoder(AV_CODEC_ID_MP2);
-
-    //qDebug() << vCodecCtx->height << " " << vCodecCtx->width;
-
-    //Find encoder
-  //  if(!eCodec){
-  //      qDebug() << "Could not find encoder mp2";
-  //  }
-//
-
-  //  eCodecCtx = avcodec_alloc_context3(eCodec);
-
-
-  //  if(!eCodecCtx){
-  //      qDebug() << "Could not allocate encoder ctx";
- //   }
-
-
-   // eCodecCtx = setCodecCtxFields(pCodecCtx,eCodecCtx);
-
-    /*eCodecCtx->bit_rate = pCodecCtx->bit_rate;
-    eCodecCtx->sample_fmt = pCodecCtx->sample_fmt;
-    eCodecCtx->sample_rate    = pCodecCtx->sample_rate;
-    eCodecCtx->channel_layout = pCodecCtx->channel_layout;
-    eCodecCtx->channels       = av_get_channel_layout_nb_channels(eCodecCtx->channel_layout);
-
-    pcmCodecCtx->bit_rate = pCodecCtx->bit_rate;
-    pcmCodecCtx->sample_fmt = pCodecCtx->sample_fmt;
-    pcmCodecCtx->sample_rate = pCodecCtx->sample_rate;
-    pcmCodecCtx->channels = pCodecCtx->channels;
-    pcmCodecCtx->channel_layout = pCodecCtx->channel_layout;*/
-
-
-
-
-
-
-
-
-
-
-
-
-   // buf.open(QBuffer::WriteOnly);
-
+    //Create new avThread object
     avThread = new decodeAVThread(formCtx);
 
-
+    //Connect finished pixel map to UI thread
     connect(avThread,SIGNAL(sendPix(QPixmap)),this,SLOT(setImgLab(QPixmap)));
-    connect(avThread,SIGNAL(changeSlider(int)),this,SLOT(on_horizontalSlider_sliderMoved(int)));
 
+    //Start thread
     avThread->start();
 
 
-    // encodeAndSave();
 
-
-   //fclose(f);
-
-
-
-
-   /* playlist = new QMediaPlaylist;
-    playlist->addMedia(QUrl::fromLocalFile("C:\\Users\\Rene\\Desktop\\apollo_17_stroll.mpg"));
-
-
-
-    player = new QMediaPlayer;
-    player->setPlaylist(playlist);
-    player->setVolume(40);
-
-    timer = new QTimer(this);
-    connect(timer,SIGNAL(timeout()),this,SLOT(proframe1andUpdateGUI()));
-
-
-
-    cap.open("C:\\Users\\Rene\\Desktop\\apollo_17_stroll.mpg");
-
-
-    qDebug() << player->state();
-
-
-    if(cap.isOpened()){
-        player->play();
-        if(player->state() == QMediaPlayer::PlayingState) {
-            timer->start(cap.get(CV_CAP_PROP_FPS));
-        }
-    }*/
-   // timer->start(cap.get(CV_CAP_PROP_FPS));
-  //  }
-  //  }
-
-   // Size inSize = Size(600,355);
-
-   // AVStream *st;
-
-
-
-
-    /*Mat img = imread("C:\\Qt\\Qt5.0.2\\Tools\\QtCreator\\bin\\myOpenCVTest\\BLB.png");
-    namedWindow("Test",CV_WINDOW_AUTOSIZE);
-    imshow("Test",img);*/
-   // waitKey(0);
 
 
 

@@ -3,20 +3,24 @@
 decodeAVThread::decodeAVThread(AVFormatContext *formCtx, QObject *parent) :
     QThread(parent)
 {
+    //Set this frames format context by pass by reference
     this->formCtx = formCtx;
-    //this->mutex = mutex;
 
+    //Initialize the global packet container
     av_init_packet(&packet);
 
+    //Find audio and video stream
     findVideoStream();
     findAudioStream();
+
+    //Audio intializations
     initAudioFrame();
     getBufferSize();
     fillAudioFrame();
     setAudioFormat();
     setAudioDeviceInfo();
 
-
+    //Video intializations
     if(checkCodec() == true){
     setDstInts();
     initVideoFrame();
@@ -32,6 +36,12 @@ decodeAVThread::decodeAVThread(AVFormatContext *formCtx, QObject *parent) :
 
 void decodeAVThread::run()
 {
+/*
+ *
+ *decodeAVThread run decodes both audio and video streams from a file
+ *and sends signals for audio and video playback onto the widget
+ *
+ */
 
     buf.open(QBuffer::ReadWrite);
 
@@ -39,7 +49,6 @@ void decodeAVThread::run()
 
         if(packet.stream_index == videostream->index){
 
-           // qDebug() << "Video";
             while(packet.size > 0){
 
             int len = 0,framefinished = 0;
@@ -52,24 +61,20 @@ void decodeAVThread::run()
                           0,vCodecCtx->height,vFrameRGB->data,vFrameRGB->linesize);
 
 
-
                QImage img(vFrameRGB->data[0],vCodecCtx->width,vCodecCtx->height,QImage::Format_RGB888);
                myImgs.append(img);
                QPixmap *pix = new QPixmap(destWidth,destHeight);
                pix->fromImage(img);
                pVec.push_back(*pix);
-               Mat test = QImagetoMat(img);
-               myMats.append(test);
-
-              // QImage dest = Mat2QImage(test);
 
 
             }
             packet.size -= len;
             packet.data += len;
           }
+
         }else if(packet.stream_index == audioStream->index){
-            //qDebug() << "Audio";
+
              qint64 written = 0;
 
             while(packet.size > 0){
@@ -77,9 +82,6 @@ void decodeAVThread::run()
             int len = 0,framefinished = 0, data_size;
 
              len = avcodec_decode_audio4(aCodecCtx,aFrame,&framefinished,&packet);
-            // qDebug() << "Breaks";
-            // qDebug() << framefinished;
-
 
              if(framefinished){
 
@@ -94,21 +96,24 @@ void decodeAVThread::run()
             packet.size -= len;
             packet.data += len;
 
+
             }
         }
         av_free_packet(&packet);
 
     }
 
+     //detect silence in the given frames of audio, play audio if silence is not detected
      if(detectSilence()){
      buf.seek(0);
      output->start(&buf);
      }
 
+     //Run thread to detect black screen
+     bsThread = new BSDetectionThread(myImgs);
+     bsThread->start();
 
-    // bsThread = new BSDetectionThread(myImgs);
-    // bsThread->start();
-
+     //If audio has started begin play video
     if(output->state() == QAudio::ActiveState){
 
     for(int i = 0; i < pVec.size(); i++){
@@ -122,7 +127,7 @@ void decodeAVThread::run()
 
 }
 
-
+//Precondition: void
 void decodeAVThread::initVideoFrame()
 {
     vFrame = avcodec_alloc_frame();
@@ -135,7 +140,9 @@ void decodeAVThread::initVideoFrame()
     vFrameRGB->format = AV_PIX_FMT_RGB24;
     vFrameRGB->channel_layout = vCodecCtx->channel_layout;
 }
+//Postcondition: video frames are intialized
 
+//Precondition: void
 void decodeAVThread::findVideoStream()
 {
     vidStream = av_find_best_stream(formCtx,AVMEDIA_TYPE_VIDEO,-1,-1,&vCodec,0);
@@ -149,7 +156,9 @@ void decodeAVThread::findVideoStream()
         FPS = videostream->avg_frame_rate.num;
     }
 }
+//Postcondition: find the video stream than set up the video codec context
 
+//Precondition: void
 bool decodeAVThread::checkCodec()
 {
     int checks = avcodec_open2(vCodecCtx,vCodec,&cDict);
@@ -160,7 +169,9 @@ bool decodeAVThread::checkCodec()
         return true;
 
 }
+//PostCondition: returns a boolean. True if codec is open, false if not.
 
+//Precondition: void
 void decodeAVThread::initConverter()
 {
     imgConvertCtx = sws_getContext(destWidth,destHeight,
@@ -169,14 +180,18 @@ void decodeAVThread::initConverter()
     if(imgConvertCtx < 0)
         qDebug() << "Could not obtain sws convert context: VideoThread";
 }
+//Postcondition: Intialize SWScontext to convert raw data to RGB
 
+//Precondition: void
 void decodeAVThread::setDstInts()
 {
     destFmt = PIX_FMT_RGB;
     destHeight = vCodecCtx->height;
     destWidth = vCodecCtx->width;
 }
+//Postcondition: set destination variables
 
+//Precondition: void
 void decodeAVThread::allocRGBPic()
 {
     int numBytes = avpicture_get_size(AV_PIX_FMT_RGB24,destWidth,destHeight);
@@ -187,12 +202,14 @@ void decodeAVThread::allocRGBPic()
         qDebug() << "Could not fill vFrameRGB picture";
     }
 }
+//Postcondition: allocate rgb frame
 
 void decodeAVThread::sendPixVec()
 {
      // emit sendPix(pVec);
 }
 
+//Precondition: void
 bool decodeAVThread::findAudioStream()
 {
 
@@ -214,7 +231,9 @@ bool decodeAVThread::findAudioStream()
        return true;
     }
 }
+//Postcondition: find best audio stream, set up codec context and return true codec is legal
 
+//Precondition: void
 void decodeAVThread::setAudioFormat()
 {
     aFormat.setSampleRate(aCodecCtx->sample_rate);
@@ -224,7 +243,9 @@ void decodeAVThread::setAudioFormat()
     aFormat.setByteOrder(QAudioFormat::LittleEndian);
     aFormat.setSampleType(QAudioFormat::SignedInt);
 }
+//Postcondition: intialize audioformat for playback
 
+//Precondition: void
 bool decodeAVThread::setAudioDeviceInfo()
 {
     QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
@@ -242,15 +263,19 @@ bool decodeAVThread::setAudioDeviceInfo()
     return false;
 
 }
+//Postcondition: determine if audio format is supported, create new audio output object, set up connections
+//return false if audio format is not supported
 
+//Precondition: pass in current audio state
 void decodeAVThread::finishedPlaying(QAudio::State state)
 {
     if (state == QAudio::IdleState) {
         output->stop();
-        //delete output;
     }
 }
+//Postcondition: if audio is idle, stop audio output
 
+//Precondition: void
 void decodeAVThread::initAudioFrame()
 {
     aFrame = avcodec_alloc_frame();
@@ -258,11 +283,13 @@ void decodeAVThread::initAudioFrame()
     aFrame->format = aCodecCtx->sample_fmt;
     aFrame->channel_layout = aCodecCtx->channel_layout;
 }
+//Postcondition: initialize audio frame
 
 void decodeAVThread::getSampleSize()
 {
 }
 
+//Precondition: void
 void decodeAVThread::getBufferSize()
 {
     bufferSize = av_samples_get_buffer_size(NULL,aCodecCtx->channels,aCodecCtx->frame_size,aCodecCtx->sample_fmt,0);
@@ -272,7 +299,9 @@ void decodeAVThread::getBufferSize()
     if(!sampleSize)
         qDebug() << "Sample size error";
 }
+//Postcondition: audio buffer gets initialized
 
+//Precondition: void
 void decodeAVThread::fillAudioFrame()
 {
     int check = avcodec_fill_audio_frame(aFrame,aCodecCtx->channels,aCodecCtx->sample_fmt,(const UINT8*)sampleSize,bufferSize,0);
@@ -280,7 +309,9 @@ void decodeAVThread::fillAudioFrame()
         qDebug() << "Could not fill audio frame";
     }
 }
+//Postcondition: intialize audio frame and fill with data pointers
 
+//Precondition: void
 bool decodeAVThread::detectSilence()
 {
     int sum,mean,stdDev;
@@ -288,7 +319,6 @@ bool decodeAVThread::detectSilence()
     for(int i = 0; i < buffData.size(); i++){
         sum += buffData.at(i);
     }
-
 
     mean = (int) (sum/buffData.size());
 
@@ -298,11 +328,7 @@ bool decodeAVThread::detectSilence()
 
     stdDev /= (int) stdDev/buffData.size();
 
-
-
-
-    //qDebug() << stdDev;
-
+    //For a 30 s video, the stdDev of silence is above 1150
     if(stdDev >= 1150){
         qDebug() << "Silence";
         return false;
@@ -312,6 +338,8 @@ bool decodeAVThread::detectSilence()
     }
 
 }
+//Postcondition: using statistics, determine if frames are silent, return false if silent
+
 
 Mat decodeAVThread::QImagetoMat(QImage img)
 {

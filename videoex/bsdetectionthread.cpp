@@ -2,8 +2,16 @@
 
 BSDetectionThread::BSDetectionThread(QVector<QImage> images)
 {
+    //Pass in vector of QImages
     deter = images;
 }
+
+/*
+ *BSDetectionThread or Black Screen Detection thread will convert
+ *passed in QImages being tested, convert them to OpenCV Mats
+ *than test each pixel in a Mat, if all the pixels are black we have a black screen
+ *
+ */
 
 void BSDetectionThread::run()
 {
