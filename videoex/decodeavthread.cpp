@@ -292,7 +292,7 @@ void decodeAVThread::getSampleSize()
 //Precondition: void
 void decodeAVThread::getBufferSize()
 {
-    bufferSize = av_samples_get_buffer_size(NULL,aCodecCtx->channels,aCodecCtx->frame_size,aCodecCtx->sample_fmt,0);
+    bufferSize = 1.5*av_samples_get_buffer_size(NULL,aCodecCtx->channels,aCodecCtx->frame_size,aCodecCtx->sample_fmt,0);
 
     sampleSize = (uint*)av_malloc(bufferSize);
 
