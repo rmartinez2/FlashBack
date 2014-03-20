@@ -7,11 +7,14 @@
 //1) Support vector model may be a solution to creating a threshold for the each new data point in the model.
 //2) Percentage diff from current stdDev
 
+//To Effectively time the cuts per minute, implement a timer that times out every 60 seconds than restarts at 0
+
 CutRateDetectionThread::CutRateDetectionThread(QVector<QImage> frameSamples, int index, QObject *parent) :
     QThread(parent)
 {
     mySamples = frameSamples;
     gIndex = index;
+    cutsPerSec = 0;
 
 }
 
@@ -19,12 +22,14 @@ CutRateDetectionThread::CutRateDetectionThread(QVector<QImage> frameSamples, QOb
     QThread(parent)
 {
     mySamples = frameSamples;
+    cutsPerSec = 0;
 }
 
 CutRateDetectionThread::CutRateDetectionThread(QVector<QPixmap> pixMapSamples, QObject *parent) :
     QThread(parent)
 {
     myPixmaps = pixMapSamples;
+    cutsPerSec = 0;
 }
 
 void CutRateDetectionThread::run()
@@ -33,54 +38,59 @@ void CutRateDetectionThread::run()
    long long stdDev = 0;
    int step = 5;
    QVector<int> sumPix;
-  //for(int i = gIndex; i < gIndex + 5; i++){
-      // Mat conv = QImage2Mat(mySamples.at(i));
-      // Mat2String(i,conv);
-       //QImage2String(mySamples.at(i));
-       // myMats.append(conv);
-    //   getPixelData(mySamples.at(i));
-   // }
+
 
    bool samples = true;
 
    //Obtain the frame samples from pixMap Vector
    for(int i = 0; i < myPixmaps.size(); i++){
 
-       //Samples is a boolean that toggles
+       //Samples is a boolean that toggles every 5 frames
        if(samples){
 
+        //Translate pixMap value to QImage and obtain the sum
+        //of all of the pixel values in the image
         QPixmap pix = myPixmaps.at(i);
         sum = getPixelData(pix);
 
-        //qDebug() << "Sum of Pix " << sum;
-
-
+        //Send pix map to UI thread for visulization
         sendPixMap(pix);
+
+        //Request user input so frames and analytics can be viewed at user's desired speed
         char Check[50];
         std::cin >> Check;
+
+        //Store the sum of all the pix values in vector for later access
         sumPix.append(sum);
 
 
        }
 
+       //For every increment of step and if i is not zero..analyze
         if(i % step == 0 && i != 0){
 
+            //Only analyze if samples is true
             if(samples == true){
+
+                //Obtain the mean than the Standard Deviation of the Frames
+                //Standard Deviation = sqrt((sum(pixelsofFrame - mean)^2)/(steps-1))
+                //Steps-1 is important since there is uncertainty in the amount of samples
+                //in the population
 
                 long long hold = 0;
 
-                for(int i = 0; i < sumPix.size(); i++){
-                    mean += sumPix.at(i);
+                for(int j = 0; j < sumPix.size(); j++){
+                    mean += sumPix.at(j);
                 }
 
                 mean /= step;
                 qDebug() << "Mean " << mean;
 
+                //Obtain the stdDev of the first 5 frames
                 if(stdDev == 0){
                     for(int cnt = 0; cnt < sumPix.size(); cnt++){
                         long long temp = 0, temp2 = 0;
                         temp += (sumPix.at(cnt) - mean);
-
                         temp2 = temp*temp;
                         hold += temp2;
                     }
@@ -125,30 +135,21 @@ void CutRateDetectionThread::run()
 
                             case PER1:
                                 qDebug() << "Cut into past frames Deviation";
+                                cutsPerSec++;
                                 stdDev = stdDev2s.at(0);
                                 break;
 
                             case PER2:
                                 qDebug() << "Cut into current Deviation";
+                                cutsPerSec++;
                                 stdDev = stdDev2;
                                 break;
 
-                            case -1:
+                            case NOCH:
                                 qDebug() << "No Change in Deviation";
                                break;
 
                             }
-
-                            /*if(plusOrMinus(stdDev2s.at(0),stdDev2 ,diff2)){
-
-                             if(diff2 < stdDev2s.at(0)){
-                              //  qDebug() << "Here 1";
-                                stdDev = stdDev2s.at(0);
-                            }else if(diff2 < stdDev2){
-                               // qDebug() << "Here 2";
-                                stdDev = stdDev2;
-                            }
-                          }*/
 
                         }
 
@@ -168,7 +169,15 @@ void CutRateDetectionThread::run()
             }
 
             samples ^= true;
+
+            if(i > 0 && i % FPM == 0){
+                qDebug() << "Cuts per 10 Seconds: " << cutsPerSec << " " << i << " " << FPM;
+                cutsPerSec = 0;
+            }
+
         }
+
+
 
    }
 
@@ -289,53 +298,18 @@ int CutRateDetectionThread::getPixelData(QPixmap pix)
     QImage img = pix.toImage();
     img = img.convertToFormat(QImage::Format_RGB888);
 
-   //  QByteArray myBytes((char*)img.bits(),img.byteCount());
 
     for(int i = 0; i < (img.width()*img.height()*3); i++){
          sum += (int)img.bits()[i];
-        //qDebug() << "Byte: " << img.bits()[i];
+
      }
 
-    /* for(int i = 0; i < img.height(); i++){
-         for(int j = 0; j < img.width(); j++){
-             sum += img.pixel(i,j);
-         }
-     }*/
 
     return (int)sum;
 
 }
 
 
-
-/*int CutRateDetectionThread::plusOrMinus(long long stdDevNew, long long stdDevCur, long long diff)
-{
-    //qDebug() << stdDevCur << " " << stdDevNew << " " << diff;
-
-    int DN = (int) stdDevNew;
-    int DC = (int) stdDevCur;
-    int D = (int) diff;
-
-    double per1 = ((double)D/(double)DN);
-    double per2 = ((double)D/(double)DC);
-
-    qDebug() << "Percent Diff/DevNew " << per1 << " Per2 " << per2;
-
-    if((per1 > 0.5 && per1 < 1.0) && (per2 > 1.0 && per2 < 0.5))
-        return PER1;
-
-      if((per1 < 0.5 && per1 > 1.0) && (per2 < 1.0 && per2 > 0.5))
-          return PER2;
-
-
-
-   // double digDiff = diff % 10;
-
-    //double checks = (double)(diff/stdDevNew)*100;
-  //  qDebug() << digDiff;
-
-
-}*/
 
 int CutRateDetectionThread::plusOrMinus(long long stdDevNew, long long stdDevCur, long long diff)
 {
@@ -348,9 +322,6 @@ int CutRateDetectionThread::plusOrMinus(long long stdDevNew, long long stdDevCur
     double per2 = ((double)D/(double)DC);
 
     qDebug() << "Percent Diff/DevNew " << per1 << " Per2 " << per2;
-
-   /* if(per1 > 0.5 && per2 > 0.5)
-        return false;*/
 
     if(per1 < 0.5 && per2 < 0.5){
         if(per1 < per2){
@@ -365,11 +336,17 @@ int CutRateDetectionThread::plusOrMinus(long long stdDevNew, long long stdDevCur
         return PER1;
 
     }else{
-        return -1;
+        return NOCH;
     }
 
 
    // return true;
 
 
+}
+
+void CutRateDetectionThread::setFPS(int FPS)
+{
+    this->FPS = FPS;
+    FPM = FPS*10;
 }

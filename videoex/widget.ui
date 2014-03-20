@@ -6,37 +6,34 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>691</width>
-    <height>405</height>
+    <width>904</width>
+    <height>465</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Widget</string>
   </property>
-  <widget class="QLabel" name="imageLab">
-   <property name="geometry">
-    <rect>
-     <x>100</x>
-     <y>40</y>
-     <width>471</width>
-     <height>241</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>TextLabel</string>
-   </property>
-  </widget>
   <widget class="QSlider" name="horizontalSlider">
    <property name="geometry">
     <rect>
-     <x>100</x>
-     <y>340</y>
+     <x>190</x>
+     <y>410</y>
      <width>461</width>
      <height>22</height>
     </rect>
    </property>
    <property name="orientation">
     <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="QGraphicsView" name="graphicsView">
+   <property name="geometry">
+    <rect>
+     <x>240</x>
+     <y>40</y>
+     <width>381</width>
+     <height>321</height>
+    </rect>
    </property>
   </widget>
  </widget>

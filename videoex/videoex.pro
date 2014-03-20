@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui multimedia multimediawidgets widgets
+QT       += core gui multimedia multimediawidgets widgets opengl
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -23,7 +23,10 @@ SOURCES += main.cpp\
     audiothread.cpp \
     decodeavthread.cpp \
     audiosdthread.cpp \
-    bsdetectionthread.cpp
+    bsdetectionthread.cpp \
+    cutratedetectionthread.cpp \
+    logodetectionthread.cpp \
+    frameglwidget.cpp
 
 HEADERS  += widget.h \
     mat2qimage.h \
@@ -35,7 +38,10 @@ HEADERS  += widget.h \
     audiothread.h \
     decodeavthread.h \
     audiosdthread.h \
-    bsdetectionthread.h
+    bsdetectionthread.h \
+    cutratedetectionthread.h \
+    logodetectionthread.h \
+    frameglwidget.h
 
 FORMS    += widget.ui
 

@@ -10,6 +10,8 @@
 #include <QImage>
 
 
+
+
 using namespace cv;
 
 class BSDetectionThread: public QThread

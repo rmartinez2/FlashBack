@@ -1,4 +1,10 @@
 #include "audiothread.h"
+#include <inttypes.h>
+#include <sys/types.h>
+
+//possible way to scale up image up...change image to cv mat...scale up to appropriate dimensions than return back to
+//qimage.
+
 
 AudioThread::AudioThread(AVFormatContext *formCtx, QObject *parent) :
     QThread(parent)
@@ -24,25 +30,78 @@ void AudioThread::run()
 
    while(av_read_frame(formCtx,&packet) == 0){
           qint64 written = 0;
+        //  qDebug() << "Read Frame";
 
             if(packet.stream_index == audioStream->index){ //audioStream->index){
 
                 while(packet.size > 0){
+                   // qDebug() << "in while packet " << packet.size;
 
                 int len = 0,framefinished = 0, data_size;
 
                  len = avcodec_decode_audio4(aCodecCtx,aFrame,&framefinished,&packet);
                 // qDebug() << framefinished;
 
+                 if(len < 0){
+                     qDebug() << "Error while decoding";
+                 }
+
 
                  if(framefinished){
 
-                    data_size = av_samples_get_buffer_size(NULL,aCodecCtx->channels,aFrame->nb_samples,aCodecCtx->sample_fmt,1);
+                     data_size = av_samples_get_buffer_size(NULL,aCodecCtx->channels,aFrame->nb_samples,aCodecCtx->sample_fmt,0);
 
-                    if(data_size > 0)
+                    if(data_size < 0){
+                        qDebug() << "Failed to calculate data size";
+                    }
+
+                    if(data_size > 0){
+                       // qDebug() << aFrame->data[0];
+
+
+                        if(aFrame->channels < 2){
 
                         buffData.append((int) aFrame->data[0]);
                         written = buf.write((const char*)aFrame->data[0],data_size);
+
+                        }
+                        else{
+                            interLeave(aFrame);
+                            //buf.write((const char*) interLeave(aFrame), data_size);
+
+                          /* INT64 channelLayout = av_get_default_channel_layout(aFrame->channels);
+                           int ret, ret2;
+
+                           AVSampleFormat format = (AVSampleFormat) aFrame->format;
+
+                          SwrContext *swr = swr_alloc_set_opts(NULL,channelLayout,
+                                                                av_get_packed_sample_fmt(format),
+                                                                aFrame->sample_rate,channelLayout,format,
+                                                                aFrame->sample_rate,0,NULL);
+
+                           ret2 = swr_init(swr);
+
+                           if(ret2 < 0)
+                               qDebug() << "Error initializing swrctx";
+
+                           byte* output[] = {sampleSize};
+
+                           ret2 = swr_convert(swr,output,aFrame->nb_samples,
+                                              (const byte**) aFrame->extended_data, aFrame->nb_samples);
+
+                           swr_free(&swr);
+
+                           data_size = ret2 * aFrame->channels * av_get_bytes_per_sample(format);
+
+                           written = buf.write((const char*) aFrame->data[0],data_size);
+
+                           if(written < 0)
+                               qDebug() << "error writing to buffer";*/
+
+
+                        }
+
+
 
                 }
 
@@ -55,13 +114,14 @@ void AudioThread::run()
             // mutex.unlock();
             av_free_packet(&packet);
         }
+   }
 
 
   // qDebug() << "the end";
-    if(detectSilence()){
-     buf.seek(0);
-     output->start(&buf);
-    }
+   // if(detectSilence()){
+     //buf.seek(0);
+    //output->start(&buf);
+   // }
 
 
      //qDebug() << output->error();
@@ -143,7 +203,7 @@ void AudioThread::getBufferSize()
 {
     bufferSize = av_samples_get_buffer_size(NULL,aCodecCtx->channels,aCodecCtx->frame_size,aCodecCtx->sample_fmt,0);
 
-    sampleSize = (uint*)av_malloc(bufferSize);
+    sampleSize = (byte*)av_malloc(bufferSize);
 
     if(!sampleSize)
         qDebug() << "Sample size error";
@@ -152,7 +212,8 @@ void AudioThread::getBufferSize()
 
 void AudioThread::fillAudioFrame()
 {
-    int check = avcodec_fill_audio_frame(aFrame,aCodecCtx->channels,aCodecCtx->sample_fmt,(const UINT8*)sampleSize,bufferSize,0);
+    int check = avcodec_fill_audio_frame(aFrame,aCodecCtx->channels,aCodecCtx->sample_fmt,
+                                         (const byte*)sampleSize,bufferSize,0);
     if(check < 0){
         qDebug() << "Could not fill audio frame";
     }
@@ -184,6 +245,61 @@ bool AudioThread::detectSilence()
         qDebug() << "Sound";
     return true;
     }
+
+
+}
+
+uint* AudioThread::interLeave(AVFrame *frame)
+{
+    QByteArray* Left =  (QByteArray*) frame->data[0];
+    QByteArray* Right = (QByteArray*) frame->data[1];
+
+
+    int lSize = sizeof(Left);
+    int rSize = sizeof(Right);
+
+   // qDebug() << lSize << " " << rSize;
+
+   // qDebug() << Left << " " << Right;
+
+    QByteArray* Temp;
+
+
+
+    qDebug() << Temp << " " << Left;
+
+   // int i = Temp->size();
+
+   // qDebug() << Temp;
+
+
+
+   // Temp->append(Left);
+   // Temp->append(Right);
+
+    //qDebug() << "Left bS: " << Left << " " << Temp;
+
+   // Left <<= 2;
+
+   // qDebug() << "Left: " << Left;
+
+   // Temp << 2;
+
+   // Temp |= Right;
+
+    //qDebug() << "Right: " <<(uint*) Temp << " " << (uint*) Right;
+
+
+
+    //Temp << 4;
+
+    //Temp |= Right;
+
+
+    //qDebug() << (uint*)Temp;
+
+    //return (uint*) Temp;
+
 
 
 }

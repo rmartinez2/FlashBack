@@ -19,6 +19,7 @@
 
 #define PER1 0
 #define PER2 1
+#define NOCH -1
 
 
 using namespace cv;
@@ -39,6 +40,10 @@ public:
     QVector<Mat> myMats;
     QVector<long long> stdDev2s;
     int gIndex;
+    int FPS;
+    int FPM;
+    int cutsPerSec;
+
 
     void run();
 
@@ -51,6 +56,7 @@ public slots:
     int getPixelData(QPixmap pix);
 
     int plusOrMinus(long long stdDevNew, long long stdDevCur, long long diff);
+    void setFPS(int FPS);
     //int plusOrMinus(long long stdDevNew, long long stdDevCur, long long diff);
     
 };

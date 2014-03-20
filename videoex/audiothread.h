@@ -46,7 +46,7 @@ public:
     QVector<int> buffData;
 
     int aStream;
-    uint *sampleSize;
+    byte *sampleSize;
     int bufferSize;
 
 
@@ -64,6 +64,7 @@ public slots:
     void getBufferSize();
     void fillAudioFrame();
     bool detectSilence();
+    uint *interLeave(AVFrame *frame);
 
     
 };

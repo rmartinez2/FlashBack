@@ -30,8 +30,10 @@
 #include <stdlib.h>
 
 #include <QVideoWidget>
-
 #include <QTimer>
+#include <QGraphicsView>
+#include <QGraphicsScene>
+
 #include "packetqueue.h"
 #include "videopicture.h"
 #include "videostate.h"
@@ -39,6 +41,8 @@
 #include "videothread.h"
 #include "audiothread.h"
 #include "decodeavthread.h"
+
+#include "frameglwidget.h"
 
 
 extern "C"{
@@ -108,6 +112,8 @@ public:
     AudioThread *aThread;
     decodeAVThread *avThread;
 
+    QGraphicsScene *myScene;
+
 
 
 public slots:
@@ -121,6 +127,7 @@ public slots:
    int packetQueueGet(PacketQueue *q, AVPacket *packet, int block);
    double getAudioClock(VideoState *is);
    void setImgLab(QPixmap pix);
+   void setUpGView();
 
     
 private slots:
