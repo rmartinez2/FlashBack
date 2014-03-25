@@ -26,7 +26,9 @@ SOURCES += main.cpp\
     bsdetectionthread.cpp \
     cutratedetectionthread.cpp \
     logodetectionthread.cpp \
-    frameglwidget.cpp
+    frameglwidget.cpp \
+    cvmatviewer.cpp \
+    playbackthread.cpp
 
 HEADERS  += widget.h \
     mat2qimage.h \
@@ -41,7 +43,9 @@ HEADERS  += widget.h \
     bsdetectionthread.h \
     cutratedetectionthread.h \
     logodetectionthread.h \
-    frameglwidget.h
+    frameglwidget.h \
+    cvmatviewer.h \
+    playbackthread.h
 
 FORMS    += widget.ui
 

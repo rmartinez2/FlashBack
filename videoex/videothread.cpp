@@ -1,6 +1,6 @@
 #include "videothread.h"
 
-VideoThread::VideoThread(AVFormatContext *formCtx,QObject *parent) :
+VideoThread::VideoThread(AVFormatContext *formCtx, playBackThread *thread, QObject *parent) :
     QThread(parent)
 {
     this->formCtx = formCtx;
@@ -13,6 +13,7 @@ VideoThread::VideoThread(AVFormatContext *formCtx,QObject *parent) :
     findVideoStream();
 
     FT = false;
+    AToggle = true;
 
     if(checkCodec() == true){
     setDstInts();
@@ -23,8 +24,10 @@ VideoThread::VideoThread(AVFormatContext *formCtx,QObject *parent) :
         qDebug() << "Failed to open codec";
     }
 
+    HCRateThread = new CutRateDetectionThread();
+    playBack = thread;
 
-    connect(this,SIGNAL(tFinished()),this,SLOT(sendPixVec()));
+   // connect(playBack,SIGNAL(sendMat(Mat)),this,SLOT(sendMatsPB(Mat)));
 
 }
 
@@ -34,10 +37,10 @@ void VideoThread::run(){
     //vBuf.open(QBuffer::WriteOnly);
 
 
-    QMutexLocker locker(&mutex);
+   // QMutexLocker locker(&mutex);
     while(av_read_frame(formCtx,&packet) == 0){
 
-        glClear(GL_COLOR_BUFFER_BIT);
+        //glClear(GL_COLOR_BUFFER_BIT);
 
 
         if(packet.stream_index == videostream->index){
@@ -51,11 +54,11 @@ void VideoThread::run(){
             if(framefinished){
                 //sws_scale(imgConvertCtx,(byte const* const*)vFrame->data,vFrame->linesize,0,vCodecCtx->height,vFrameRGB->data,vFrameRGB->linesize);
 
-            int ni = sws_scale(imgConvertCtx,vFrame->data,vFrame->linesize,
+            sws_scale(imgConvertCtx,vFrame->data,vFrame->linesize,
                           0,vCodecCtx->height,bgrFrame->data,bgrFrame->linesize);
 
 
-            if(ni > 0){
+
 
                //Fill mat object with pixel data
                for(int i = 0; i < vCodecCtx->height; i++){
@@ -68,12 +71,43 @@ void VideoThread::run(){
 
 
 
-               //if Frame is legitimate, append to to vector of mats
+               //if Frame is legitimate, append to vector of mats
+
                if(!myFrame.empty()){
-                   myMats.append(myFrame);
-            }
+
+
+                       resize(myFrame,myAnalyticFrame,nSz);
+                       analytics.append(myAnalyticFrame);
+
+
+
+
+
+
           }
-            }
+              // qDebug() << analytics.size();
+              // if(analytics.size() % 5 == 0 && AToggle == true){
+
+             //          AToggle = false;
+
+
+                      /* QSize sz;
+                       sz.setHeight(destHeight);
+                       sz.setWidth(destWidth);
+
+                      // HCRateThread = new CutRateDetectionThread(analytics,sz);
+                      // HCRateThread->setFPS(FPS);
+                       HCRateThread->start();*/
+
+
+
+                //   }else{
+                //        AToggle = true;
+                      // HCRateThread->addFrames();
+                      // qDebug() << "Add more frames that were buffered here";
+
+              // }
+        }
             packet.size -= len;
             packet.data += len;
 
@@ -81,13 +115,14 @@ void VideoThread::run(){
         }
         av_free_packet(&packet);
 
-
     }
 
-    /*HCRateThread = new CutRateDetectionThread(pVec);
-    QObject::connect(HCRateThread,SIGNAL(sendPixMap(QPixmap)),this,SLOT(sendPixHS(QPixmap)));
-    HCRateThread->setFPS(FPS);
-    HCRateThread->start();*/
+
+
+
+
+   // QObject::connect(HCRateThread,SIGNAL(sendPixMap(QPixmap)),this,SLOT(sendPixHS(QPixmap)));
+
 
    /* for(int i = 0; i < pVec.size(); i++){
         emit sendPix(pVec.at(i));
@@ -159,6 +194,9 @@ void VideoThread::setDstInts()
     destFmt = PIX_FMT_RGB;
     destHeight = vCodecCtx->height;
     destWidth = vCodecCtx->width;
+
+    nSz.height = destHeight/16;
+    nSz.width = destWidth/16;
 }
 
 void VideoThread::allocRGBPic()
@@ -191,6 +229,11 @@ void VideoThread::sendPixVec()
 void VideoThread::sendPixHS(QPixmap pix)
 {
     emit sendPix(pix);
+}
+
+void VideoThread::sendMatsPB(Mat mat)
+{
+    emit sendMat(mat);
 }
 
 

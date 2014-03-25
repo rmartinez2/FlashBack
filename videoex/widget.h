@@ -43,6 +43,8 @@
 #include "decodeavthread.h"
 
 #include "frameglwidget.h"
+#include "cvmatviewer.h"
+#include "playbackthread.h"
 
 
 extern "C"{
@@ -62,10 +64,13 @@ namespace Ui {
 class Widget;
 }
 
+using namespace cv;
+using namespace std;
+
 class Widget : public QWidget
 {
     Q_OBJECT
-
+    //Q_DECLARE_METATYPE(Mat)
 
     
 public:
@@ -114,6 +119,9 @@ public:
 
     QGraphicsScene *myScene;
 
+    cvMatViewer *matViewer;
+    playBackThread *pbThread;
+
 
 
 public slots:
@@ -128,6 +136,7 @@ public slots:
    double getAudioClock(VideoState *is);
    void setImgLab(QPixmap pix);
    void setUpGView();
+   void drawMat(Mat mat);
 
     
 private slots:

@@ -34,6 +34,7 @@ extern "C"{
 
 #include "mat2qimage.h"
 #include "cutratedetectionthread.h"
+#include "playbackthread.h"
 
 using namespace cv;
 
@@ -42,7 +43,7 @@ class VideoThread : public QThread
     Q_OBJECT
 
 public:
-    explicit VideoThread(AVFormatContext *formCtx, QObject *parent = 0);
+    explicit VideoThread(AVFormatContext *formCtx, playBackThread *thread ,QObject *parent = 0);
 
     void run();
 
@@ -62,7 +63,7 @@ public:
     QVector <QPixmap> pVec;
     QMutex mutex;
 
-    //GlTexture texture;
+    bool AToggle;
 
     bool FT;
 
@@ -71,7 +72,13 @@ public:
     CutRateDetectionThread *HCRateThread;
 
     Mat myFrame;
+    Mat myAnalyticFrame;
     QVector<Mat> myMats;
+    QVector<Mat> analytics;
+
+    playBackThread *playBack;
+
+    cv::Size nSz;
 
 
     
@@ -79,6 +86,7 @@ signals:
     void sendPix(QPixmap);
     void tFinished();
     void sendQImg(QImage);
+    void sendMat(Mat);
     
 public slots:
     void initVideoFrame();
@@ -89,6 +97,8 @@ public slots:
     void allocRGBPic();
     void sendPixVec();
     void sendPixHS(QPixmap pix);
+    void sendMatsPB(Mat mat);
+
     
 };
 

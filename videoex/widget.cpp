@@ -22,7 +22,7 @@ Widget::Widget(QWidget *parent) :
 
 
     const char* filename = "C:\\Users\\Rene\\Desktop\\Test.mp2";
-    const char* Path = "C:\\Users\\Rene\\Desktop\\L&O.mpg";
+    char* Path = "C:\\Users\\Rene\\Desktop\\L&O.mpg";
 
     AVDictionary *optionsDict = NULL;
 
@@ -43,7 +43,7 @@ Widget::Widget(QWidget *parent) :
     //debugging info on video and stream
     av_dump_format(formCtx,0,"C:\\Users\\Rene\\Desktop\\L&O.mpg",0);
 
-    qDebug() << "Show me the money";
+    //qDebug() << "Show me the money";
 
 
     ui->horizontalSlider->setRange(0,(int)formCtx->duration/30000);
@@ -73,6 +73,7 @@ Widget::Widget(QWidget *parent) :
         rect.setWidth(vCodecCtx->width);
 
         ui->graphicsView->setGeometry(rect);
+        this->setGeometry(rect);
 
 
     }
@@ -129,17 +130,30 @@ Widget::Widget(QWidget *parent) :
    // buf.open(QBuffer::WriteOnly);
 
    // avThread = new decodeAVThread(formCtx);
-   vThread = new VideoThread(formCtx);
+
+    matViewer = new cvMatViewer();
+
+   ui->graphicsView->scene()->addWidget(matViewer);
+
+    pbThread = new playBackThread(Path);
+    //vThread = new VideoThread(formCtx,pbThread);
+
+
+
+   qRegisterMetaType<Mat>("Mat");
+ //  connect(vThread,SIGNAL(sendMat(Mat)), this,SLOT(drawMat(Mat)));
+   connect(pbThread,SIGNAL(sendMat(Mat)),this, SLOT(drawMat(Mat)));
+   pbThread->start();
    // aThread = new AudioThread(formCtx);
 
    //connect(avThread,SIGNAL(sendPix(QPixmap)),this,SLOT(setImgLab(QPixmap)));
-    connect(avThread,SIGNAL(changeSlider(int)),this,SLOT(on_horizontalSlider_sliderMoved(int)));
+   // connect(avThread,SIGNAL(changeSlider(int)),this,SLOT(on_horizontalSlider_sliderMoved(int)));
 
    // connect(vThread,SIGNAL(sendPix(QPixmap)),this,SLOT(setImgLab(QPixmap)));
 
    // avThread->start();
 
-    vThread->start();
+   // vThread->start();
 
    // aThread->start();
 
@@ -147,52 +161,6 @@ Widget::Widget(QWidget *parent) :
     // encodeAndSave();
 
 
-   //fclose(f);
-
-
-
-
-   /* playlist = new QMediaPlaylist;
-    playlist->addMedia(QUrl::fromLocalFile("C:\\Users\\Rene\\Desktop\\apollo_17_stroll.mpg"));
-
-
-
-    player = new QMediaPlayer;
-    player->setPlaylist(playlist);
-    player->setVolume(40);
-
-    timer = new QTimer(this);
-    connect(timer,SIGNAL(timeout()),this,SLOT(proframe1andUpdateGUI()));
-
-
-
-    cap.open("C:\\Users\\Rene\\Desktop\\apollo_17_stroll.mpg");
-
-
-    qDebug() << player->state();
-
-
-    if(cap.isOpened()){
-        player->play();
-        if(player->state() == QMediaPlayer::PlayingState) {
-            timer->start(cap.get(CV_CAP_PROP_FPS));
-        }
-    }*/
-   // timer->start(cap.get(CV_CAP_PROP_FPS));
-  //  }
-  //  }
-
-   // Size inSize = Size(600,355);
-
-   // AVStream *st;
-
-
-
-
-    /*Mat img = imread("C:\\Qt\\Qt5.0.2\\Tools\\QtCreator\\bin\\myOpenCVTest\\BLB.png");
-    namedWindow("Test",CV_WINDOW_AUTOSIZE);
-    imshow("Test",img);*/
-   // waitKey(0);
 
 
 
@@ -417,6 +385,12 @@ void Widget::setUpGView()
     myScene = new QGraphicsScene();
 
     ui->graphicsView->setScene(myScene);
+}
+
+void Widget::drawMat(Mat mat)
+{
+    matViewer->showImg(mat);
+    matViewer->show();
 }
 
 

@@ -2,8 +2,7 @@
 #define CUTRATEDETECTIONTHREAD_H
 
 #include <QThread>
-#include "opencv2/core/core.hpp"
-#include "opencv2/highgui/highgui.hpp"
+
 #include "mat2qimage.h"
 #include <QDebug>
 #include <QVector>
@@ -16,6 +15,12 @@
 #include <iostream>
 #include <math.h>
 #include <cmath>
+
+#include "opencv2/core/core.hpp"
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv/cv.h"
+#include "opencv2/imgproc/imgproc.hpp"
+
 
 #define PER1 0
 #define PER2 1
@@ -32,6 +37,8 @@ public:
     explicit CutRateDetectionThread(QVector<QImage> frameSamples,int index, QObject *parent = 0);
     explicit CutRateDetectionThread(QVector<QImage> frameSamples, QObject *parent = 0);
     explicit CutRateDetectionThread(QVector<QPixmap> pixMapSamples, QObject *parent = 0);
+    explicit CutRateDetectionThread(QVector<Mat> myMats, QSize frameWH, QObject *parent = 0);
+    explicit CutRateDetectionThread(QObject *parent = 0);
 
 
 
@@ -44,19 +51,32 @@ public:
     int FPM;
     int cutsPerSec;
 
+    QVector<int> currentFrameSums;
+
+
+    QSize originWindowSz;
+
+    bool isMats;
+    bool isPixMaps;
+
+    int currentDev;
 
     void run();
 
 signals:
     void sendPixMap(QPixmap);
+    void sendMats(Mat);
 public slots:
     QString QImage2String(QImage img);
     QString Mat2String(int frameNumb, Mat mat);
     void getPixelData(QImage img);
     int getPixelData(QPixmap pix);
+    int getPixelData(Mat mat, int frame);
 
     int plusOrMinus(long long stdDevNew, long long stdDevCur, long long diff);
     void setFPS(int FPS);
+    void addFrames(QVector<Mat> frames);
+    int numbofDigits(int numb);
     //int plusOrMinus(long long stdDevNew, long long stdDevCur, long long diff);
     
 };

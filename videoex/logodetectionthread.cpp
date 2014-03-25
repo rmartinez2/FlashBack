@@ -11,6 +11,40 @@ logoDetectionThread::logoDetectionThread(QVector<QImage> samples, QObject *paren
 {
 }
 
+logoDetectionThread::logoDetectionThread(QObject *parent):
+    QThread(parent)
+{
+    logoMat = imread("C:\\Users\\Rene\\Desktop\\LogoTheMiddleLg.jpg");
+    cvtColor(logoMat,logoGray,CV_BGR2GRAY);
+
+}
+
 void logoDetectionThread::run()
 {
+
+   // emit ldSendMat(logoMat);
+
+
+
+
+
+
+    this->quit();
 }
+
+
+void logoDetectionThread::addFrames(QVector<Mat> frames)
+{
+    myMats = frames;
+}
+
+void logoDetectionThread::setLogoLoc(int x1, int y1, int x2, int y2)
+{
+    this->x1 = x1;
+    this->y1 = y1;
+
+    this->x2 = x2;
+    this->y2 = y2;
+}
+
+

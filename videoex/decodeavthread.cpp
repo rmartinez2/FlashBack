@@ -108,8 +108,8 @@ void decodeAVThread::run()
      }
 
 
-     bsThread = new BSDetectionThread(myImgs);
-     bsThread->start();
+    // bsThread = new BSDetectionThread(myImgs);
+    // bsThread->start();
 
     if(output->state() == QAudio::ActiveState){
 
