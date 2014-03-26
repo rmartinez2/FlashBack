@@ -15,11 +15,13 @@ extern "C"{
 
 #include "opencv2/core/core.hpp"
 #include "opencv2/highgui/highgui.hpp"
-#include "opencv/cv.h"
 #include "opencv2/imgproc/imgproc.hpp"
+
+#include "opencv2/gpu/gpu.hpp"
 
 using namespace cv;
 using namespace std;
+
 
 class logoDetectionThread : public QThread
 {
@@ -32,15 +34,19 @@ public:
 
     QVector<Mat> myMats;
     Mat logoMat;
-    Mat logoGray;
+    Mat logoGray, gradX, gradY, absGradX, absGradY, gradLogo, gradTemp;
 
     int x1;
     int x2;
     int y1;
     int y2;
+    int scale;
+    int delta;
+    int ddepth;
     
 signals:
     void ldSendMat(Mat myMats);
+    void noLogo(bool);
     
 public slots:
 

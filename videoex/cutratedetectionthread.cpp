@@ -49,6 +49,7 @@ CutRateDetectionThread::CutRateDetectionThread(QObject *parent):
     QThread(parent)
 {
     currentDev = 0;
+    cutsPerSec = 0;
 }
 
 void CutRateDetectionThread::run()
@@ -209,6 +210,26 @@ void CutRateDetectionThread::run()
 
       // qDebug() << myMats.size();
        long long mean = 0;
+
+
+       if(seconds == 30){
+           seconds = 0;
+
+           if(cutsPerSec > 10){
+               qDebug() << "High Cut Rate";
+
+           }else{
+               qDebug() << "Regular Cut Rate";
+           }
+
+           qDebug() << cutsPerSec;
+
+           cutsPerSec = 0;
+
+       }
+
+       seconds++;
+
        for(int i = 0; i < myMats.size(); i++){
 
           int temp = getPixelData(myMats.at(i),i);
@@ -225,11 +246,11 @@ void CutRateDetectionThread::run()
 
        }
 
-       qDebug() << "Sum Before mean " << mean;
+       //qDebug() << "Sum Before mean " << mean;
 
        mean = mean/myMats.size();
 
-       qDebug() << "Mean " << mean;
+       //qDebug() << "Mean " << mean;
 
 
 
@@ -263,12 +284,11 @@ void CutRateDetectionThread::run()
            else
                noCut = dig2;
 
-           if(numbofDigits(diff) <= noCut){
-               qDebug() << "NO CUT";
+           if(numbofDigits(diff) > noCut){
+               cutsPerSec++;
+               // qDebug() << "NO CUT";
            }
-           else{
-               qDebug() << "CUT";
-           }
+
 
            currentDev = stdDev;
 
@@ -280,7 +300,7 @@ void CutRateDetectionThread::run()
 
 
 
-       qDebug() << stdDev;
+       //qDebug() << stdDev;
 
 
       //  char Check[50];
@@ -364,9 +384,9 @@ QImage dest(mat.cols, mat.rows, QImage::Format_ARGB32);
         }
       }
     }
-    QString poop = " ";
+    QString sNull = " ";
 
-    return poop;
+    return sNull;
 
 }
 

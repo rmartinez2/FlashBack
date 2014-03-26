@@ -28,6 +28,10 @@ playBackThread::playBackThread(char *fileName, QObject *parent):
     connect(HCRateThread,SIGNAL(sendMats(Mat)),this,SLOT(fromCRate(Mat)));
     connect(bSDetectThread,SIGNAL(sendMyMat(Mat)),this,SLOT(fromBSDect(Mat)));
     connect(logoDectThread,SIGNAL(ldSendMat(Mat)),this,SLOT(fromldDect(Mat)));
+
+   // connect(HCRateThread,SIGNAL(highCuts(bool)),this,SLOT());
+   // connect(bSDetectThread,SIGNAL(isBlack(bool)),this, SLOT());
+   // connect(logoDectThread,SIGNAL(noLogo(bool)),this, SLOT());
 }
 
 void playBackThread::run()
@@ -50,7 +54,11 @@ void playBackThread::run()
 
 
             if(!frame.empty()){
-               // emit sendMat(frame);
+                emit sendMat(frame);
+
+                //imshow("Video",frame);
+                //waitKey(3);
+
 
 
                 Mat reSiz;
@@ -61,7 +69,7 @@ void playBackThread::run()
                 buffs.append(frame);
                 bsAnalytics.append(reSiz);
                 crAnalytics.append(reSiz);
-                ldAnalytics.append(reSiz);
+                //ldAnalytics.append(reSiz);
 
             /*    if(i == 358){
 
@@ -102,7 +110,7 @@ void playBackThread::run()
                // qDebug() << analytics.size();
                 if(!bSDetectThread->isRunning()){
                 bSDetectThread->readInFrames(bsAnalytics);
-                //bSDetectThread->start();
+               // bSDetectThread->start();
                 }
 
                 bsAnalytics.clear();
@@ -112,19 +120,19 @@ void playBackThread::run()
 
                 if(!HCRateThread->isRunning()){
                     HCRateThread->addFrames(crAnalytics);
-                   // HCRateThread->start();
+                    //HCRateThread->start();
                 }
                 crAnalytics.clear();
             }
 
             if(buffs.size() % 50 == 0){
                 if(!logoDectThread->isRunning()){
-                    logoDectThread->addFrames(ldAnalytics);
-                    logoDectThread->start();
+                    logoDectThread->addFrames(buffs);
+                   // logoDectThread->start();
 
                 }
 
-                ldAnalytics.clear();
+               // ldAnalytics.clear();
             }
 
 

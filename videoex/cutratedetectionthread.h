@@ -50,6 +50,7 @@ public:
     int FPS;
     int FPM;
     int cutsPerSec;
+    int seconds;
 
     QVector<int> currentFrameSums;
 
@@ -66,6 +67,7 @@ public:
 signals:
     void sendPixMap(QPixmap);
     void sendMats(Mat);
+    void highCuts(bool);
 public slots:
     QString QImage2String(QImage img);
     QString Mat2String(int frameNumb, Mat mat);
