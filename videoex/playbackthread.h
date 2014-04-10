@@ -3,6 +3,8 @@
 
 #include <QThread>
 #include <QVector>
+#include <QTimer>
+
 #include "opencv2/core/core.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
@@ -25,6 +27,8 @@ public:
 
     void run();
 
+    QTimer *frameReady;
+
     QVector<Mat> buffs;
     QVector<Mat> bsAnalytics;
     QVector<Mat> crAnalytics;
@@ -36,6 +40,8 @@ public:
     CutRateDetectionThread *HCRateThread;
     BSDetectionThread *bSDetectThread;
     logoDetectionThread *logoDectThread;
+
+    VideoCapture cap;
 
 
 
@@ -51,6 +57,7 @@ public slots:
     void fromCRate(Mat mat);
     void fromBSDect(Mat mat);
     void fromldDect(Mat mat);
+    void queryFrame();
     
 };
 

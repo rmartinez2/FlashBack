@@ -29,6 +29,9 @@ playBackThread::playBackThread(char *fileName, QObject *parent):
     connect(bSDetectThread,SIGNAL(sendMyMat(Mat)),this,SLOT(fromBSDect(Mat)));
     connect(logoDectThread,SIGNAL(ldSendMat(Mat)),this,SLOT(fromldDect(Mat)));
 
+    frameReady = new QTimer(this);
+    connect(frameReady,SIGNAL(timeout()),this,SLOT(queryFrame()));
+
    // connect(HCRateThread,SIGNAL(highCuts(bool)),this,SLOT());
    // connect(bSDetectThread,SIGNAL(isBlack(bool)),this, SLOT());
    // connect(logoDectThread,SIGNAL(noLogo(bool)),this, SLOT());
@@ -41,13 +44,21 @@ void playBackThread::run()
     bool toggle = true;
    // FPS = 1000* (1/FPS);
 
-    VideoCapture cap(filePath);
+    cap.open(filePath);
+
+    double fps = cap.get(CV_CAP_PROP_FPS);
+
+    frameReady->setInterval(1000.00/fps);
+
+    frameReady->start();
 
     //int codec = cap.get(CV_CAP_PROP_FOURCC);
 
-    if(cap.isOpened()){
+   /* if(cap.isOpened()){
 
         Mat frame;
+
+
 
         for(int i = 0; i < cap.get(CV_CAP_PROP_FRAME_COUNT); i++){
             cap >> frame;
@@ -85,7 +96,7 @@ void playBackThread::run()
 
             }*/
 
-            }
+           // }
 
            /* if(analytics.size() % 100 == 0 && toggle == true && analytics.size() > 0){
 
@@ -105,12 +116,12 @@ void playBackThread::run()
 
                 toggle = false;
 
-            }else*/
-            if(buffs.size() % 50 == 0 /*&& toggle == false*/){
+           // }else*/
+           /* if(buffs.size() % 50 == 0 /*&& toggle == false*///)//{
                // qDebug() << analytics.size();
-                if(!bSDetectThread->isRunning()){
+             /*   if(!bSDetectThread->isRunning()){
                 bSDetectThread->readInFrames(bsAnalytics);
-               // bSDetectThread->start();
+                bSDetectThread->start();
                 }
 
                 bsAnalytics.clear();
@@ -120,7 +131,7 @@ void playBackThread::run()
 
                 if(!HCRateThread->isRunning()){
                     HCRateThread->addFrames(crAnalytics);
-                    //HCRateThread->start();
+                    HCRateThread->start();
                 }
                 crAnalytics.clear();
             }
@@ -128,7 +139,7 @@ void playBackThread::run()
             if(buffs.size() % 50 == 0){
                 if(!logoDectThread->isRunning()){
                     logoDectThread->addFrames(buffs);
-                   // logoDectThread->start();
+                    logoDectThread->start();
 
                 }
 
@@ -155,7 +166,7 @@ void playBackThread::run()
         msleep(30);
     }*/
 
-    this->quit();
+   // this->quit();
 }
 
 
@@ -183,4 +194,24 @@ void playBackThread::fromBSDect(Mat mat)
 void playBackThread::fromldDect(Mat mat)
 {
     emit sendMat(mat);
+}
+
+void playBackThread::queryFrame()
+{
+    if(cap.isOpened()){
+
+    Mat frame;
+
+    qDebug() << "Time out";
+
+
+
+    if(!frame.empty()){
+        emit sendMat(frame);
+    }
+
+    }
+
+
+
 }

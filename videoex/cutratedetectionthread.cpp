@@ -108,7 +108,7 @@ void CutRateDetectionThread::run()
                 }
 
                 mean /= step;
-                qDebug() << "Mean " << mean;
+               // qDebug() << "Mean " << mean;
 
                 //Obtain the stdDev of the first 5 frames
                 if(stdDev == 0){
@@ -120,7 +120,7 @@ void CutRateDetectionThread::run()
                     }
 
                   stdDev = (long long)sqrt(hold/(sumPix.size()-1));
-                  qDebug() << "StdDev of First 5 Frames " << stdDev;
+                //  qDebug() << "StdDev of First 5 Frames " << stdDev;
 
                 }else{
 
@@ -216,13 +216,13 @@ void CutRateDetectionThread::run()
            seconds = 0;
 
            if(cutsPerSec > 10){
-               qDebug() << "High Cut Rate";
-
+              // qDebug() << "High Cut Rate";
+            emit highCuts(true);
            }else{
-               qDebug() << "Regular Cut Rate";
+              // qDebug() << "Regular Cut Rate";
            }
 
-           qDebug() << cutsPerSec;
+          // qDebug() << cutsPerSec;
 
            cutsPerSec = 0;
 
@@ -272,6 +272,9 @@ void CutRateDetectionThread::run()
            currentDev = stdDev;
 
        }else{
+
+          // qDebug() << currentDev << " " << stdDev;
+
            int diff = abs(currentDev - stdDev);
 
            int dig1 = numbofDigits(currentDev);
@@ -283,6 +286,9 @@ void CutRateDetectionThread::run()
                noCut = dig1;
            else
                noCut = dig2;
+
+
+          // qDebug() << numbofDigits(diff) << " " << noCut;
 
            if(numbofDigits(diff) > noCut){
                cutsPerSec++;

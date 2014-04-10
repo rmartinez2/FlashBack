@@ -15,10 +15,6 @@ TEMPLATE = app
 SOURCES += main.cpp\
         widget.cpp \
     mat2qimage.cpp \
-    packetqueue.cpp \
-    videostate.cpp \
-    videopicture.cpp \
-    qcondition.cpp \
     videothread.cpp \
     audiothread.cpp \
     decodeavthread.cpp \
@@ -28,14 +24,14 @@ SOURCES += main.cpp\
     logodetectionthread.cpp \
     frameglwidget.cpp \
     cvmatviewer.cpp \
-    playbackthread.cpp
+    playbackthread.cpp \
+    mainmenu.cpp \
+    sidemenu.cpp \
+    slidervisual.cpp \
+    notificationwidget.cpp
 
 HEADERS  += widget.h \
     mat2qimage.h \
-    packetqueue.h \
-    videostate.h \
-    videopicture.h \
-    qcondition.h \
     videothread.h \
     audiothread.h \
     decodeavthread.h \
@@ -45,7 +41,11 @@ HEADERS  += widget.h \
     logodetectionthread.h \
     frameglwidget.h \
     cvmatviewer.h \
-    playbackthread.h
+    playbackthread.h \
+    mainmenu.h \
+    sidemenu.h \
+    slidervisual.h \
+    notificationwidget.h
 
 FORMS    += widget.ui
 
@@ -70,7 +70,7 @@ QMAKE_CXXFLAGS += -D__STDC_CONSTANT_MACROS
 
 INCLUDEPATH += C:\\openCV_build_debug\\install\\include
 
-LIBS += -LC:\\openCV_build_debug\\install\\lib \
+LIBS += -LC:\\openCV_build_debug\\install\\lib\
     -llibopencv_core246 \
     -llibopencv_highgui246 \
     -llibopencv_imgproc246 \

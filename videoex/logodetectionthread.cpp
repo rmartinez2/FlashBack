@@ -83,17 +83,21 @@ void logoDetectionThread::run()
             }
         }
 
-        qDebug() << sum;
+        //qDebug() << sum;
 
         if(sum > 200000){
-            qDebug() << "Logo has disappeared";
+
+            emit noLogo(true);
+          //qDebug() << "Logo has disappeared";
+        }else{
+            emit noLogo(false);
         }
 
 
         sum = 0;
 
        // emit ldSendMat(temp);
-        msleep(16.67);
+       // msleep(16.67);
     }
    // emit ldSendMat(logoMat);
 

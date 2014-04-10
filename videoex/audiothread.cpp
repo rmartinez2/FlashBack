@@ -66,10 +66,10 @@ void AudioThread::run()
 
                         }
                         else{
-                            interLeave(aFrame);
+                           // interLeave(aFrame);
                             //buf.write((const char*) interLeave(aFrame), data_size);
 
-                          /* INT64 channelLayout = av_get_default_channel_layout(aFrame->channels);
+                           INT64 channelLayout = av_get_default_channel_layout(aFrame->channels);
                            int ret, ret2;
 
                            AVSampleFormat format = (AVSampleFormat) aFrame->format;
@@ -96,7 +96,7 @@ void AudioThread::run()
                            written = buf.write((const char*) aFrame->data[0],data_size);
 
                            if(written < 0)
-                               qDebug() << "error writing to buffer";*/
+                               qDebug() << "error writing to buffer";
 
 
                         }

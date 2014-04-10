@@ -20,6 +20,15 @@ Widget::Widget(QWidget *parent) :
 
     setUpGView();
 
+    frameCounter = 0;
+    toggle = true;
+    mtoggle = false;
+    stoggle = false;
+    sliderToggle = false;
+    notifs = false;
+
+    ui->graphicsView->setAlignment(Qt::AlignLeft | Qt::AlignTop);
+
 
     const char* filename = "C:\\Users\\Rene\\Desktop\\Test.mp2";
     char* Path = "C:\\Users\\Rene\\Desktop\\L&O.mpg";
@@ -32,6 +41,7 @@ Widget::Widget(QWidget *parent) :
     if(avformat_open_input(&formCtx,"C:\\Users\\Rene\\Desktop\\L&O.mpg",NULL,NULL) != 0){
         qDebug() << "Did not open video";
     }
+
 
 
 
@@ -69,8 +79,10 @@ Widget::Widget(QWidget *parent) :
         vCodecCtx->codec = vCodec;
         QRect rect;
 
-        rect.setHeight(vCodecCtx->height);
-        rect.setWidth(vCodecCtx->width);
+        rect.setHeight(vCodecCtx->height/2);
+        rect.setWidth(vCodecCtx->width/2);
+
+       // qDebug() << rect.height() << " " << rect.width();
 
         ui->graphicsView->setGeometry(rect);
         this->setGeometry(rect);
@@ -78,96 +90,95 @@ Widget::Widget(QWidget *parent) :
 
     }
 
-
-   // FrameGLWidget widget(Path);
-
-   // widget.playVid();
-
-
-   // if(avcodec_open2(pCodecCtx,pCodec,&optionsDict) < 0)
-   //     qDebug() << "Couldn't open audio Codec";
-
-   // if(avcodec_open2(vCodecCtx,vCodec,&optionsDict) < 0)
-   //     qDebug() << "Couldn't open video codec";
-
-  //  qDebug() << "This stream has " << pCodecCtx->channels << " channels and a sample rate of " << pCodecCtx->sample_rate << "Hz";
-  //  qDebug() << "The data is in the format " << av_get_sample_fmt_name(pCodecCtx->sample_fmt);
-
-  //  eCodec = avcodec_find_encoder(AV_CODEC_ID_MP2);
-
-    //qDebug() << vCodecCtx->height << " " << vCodecCtx->width;
-
-    //Find encoder
-  //  if(!eCodec){
-  //      qDebug() << "Could not find encoder mp2";
-  //  }
-//
-
-  //  eCodecCtx = avcodec_alloc_context3(eCodec);
+    capTimer = new QTimer(this);
+    cap.open(Path);
+    double fps = cap.get(CV_CAP_PROP_FPS);
+    capTimer->setInterval(1000.0/fps);
 
 
-  //  if(!eCodecCtx){
-  //      qDebug() << "Could not allocate encoder ctx";
- //   }
+    HCRateThread = new CutRateDetectionThread();
+    bsDetectThread = new BSDetectionThread();
+    LDThread = new logoDetectionThread();
 
+    main = new MainMenu();
+    sMenu = new SideMenu();
+    sVis = new SliderVisual();
+    notes = new NotificationWidget();
 
-   // eCodecCtx = setCodecCtxFields(pCodecCtx,eCodecCtx);
+    int menuY = 0;
+    int menuX = 0;
 
-    /*eCodecCtx->bit_rate = pCodecCtx->bit_rate;
-    eCodecCtx->sample_fmt = pCodecCtx->sample_fmt;
-    eCodecCtx->sample_rate    = pCodecCtx->sample_rate;
-    eCodecCtx->channel_layout = pCodecCtx->channel_layout;
-    eCodecCtx->channels       = av_get_channel_layout_nb_channels(eCodecCtx->channel_layout);
+    int menuW = vCodecCtx->width/2;
+    int menuH = vCodecCtx->height/2;
 
-    pcmCodecCtx->bit_rate = pCodecCtx->bit_rate;
-    pcmCodecCtx->sample_fmt = pCodecCtx->sample_fmt;
-    pcmCodecCtx->sample_rate = pCodecCtx->sample_rate;
-    pcmCodecCtx->channels = pCodecCtx->channels;
-    pcmCodecCtx->channel_layout = pCodecCtx->channel_layout;*/
+    main->setXYWH(menuX,menuY,menuH,menuW);
+
+    int menu2W = menuW/4;
+    sMenu->setXYWH(menuX,menuY,menu2W,menuH);
+
+    int menu3H = menuH/4;
+    int menu3Y = 275;
+
+    sVis->setXYWH(menuX,menu3Y,menuW,menu3H);
+
+    notes->setXYWH(400,15,200,100);
 
 
 
-   // buf.open(QBuffer::WriteOnly);
+    connect(HCRateThread,SIGNAL(highCuts(bool)),this,SLOT(recHighCuts(bool)));
+    connect(bsDetectThread,SIGNAL(isBlack(bool)),this,SLOT(recBS(bool)));
+    connect(LDThread,SIGNAL(noLogo(bool)),this,SLOT(recNoLogo(bool)));
+    connect(capTimer,SIGNAL(timeout()),this,SLOT(drawMat2()));
+    connect(this,SIGNAL(ldcrbufferFull()),this,SLOT(addFramesToThreads()));
+    connect(this,SIGNAL(bsbufferFull()),this,SLOT(addFramesToBSThread()));
 
-   // avThread = new decodeAVThread(formCtx);
 
-    matViewer = new cvMatViewer();
+   matViewer = new cvMatViewer();
 
    ui->graphicsView->scene()->addWidget(matViewer);
+   ui->graphicsView->scene()->addWidget(main);
+   ui->graphicsView->scene()->addWidget(sMenu);
+   ui->graphicsView->scene()->addWidget(sVis);
+   ui->graphicsView->scene()->addWidget(notes);
 
-    pbThread = new playBackThread(Path);
-    //vThread = new VideoThread(formCtx,pbThread);
+   matViewer->show();
 
-
-
-   qRegisterMetaType<Mat>("Mat");
- //  connect(vThread,SIGNAL(sendMat(Mat)), this,SLOT(drawMat(Mat)));
-   connect(pbThread,SIGNAL(sendMat(Mat)),this, SLOT(drawMat(Mat)));
-   pbThread->start();
-   // aThread = new AudioThread(formCtx);
-
-   //connect(avThread,SIGNAL(sendPix(QPixmap)),this,SLOT(setImgLab(QPixmap)));
-   // connect(avThread,SIGNAL(changeSlider(int)),this,SLOT(on_horizontalSlider_sliderMoved(int)));
-
-   // connect(vThread,SIGNAL(sendPix(QPixmap)),this,SLOT(setImgLab(QPixmap)));
-
-   // avThread->start();
-
-   // vThread->start();
-
-   // aThread->start();
+   if(cap.isOpened()){
+    //usingImShow();
+   capTimer->start();
 
 
-    // encodeAndSave();
-
-
-
+   }
 
 
 }
 
 Widget::~Widget()
 {
+
+    cap.release();
+
+    ldBuffer.clear();
+    bsBuffer.clear();
+    crBuffer.clear();
+
+    LDThread->quit();
+    bsDetectThread->quit();
+    HCRateThread->quit();
+
+    delete LDThread;
+    delete bsDetectThread;
+    delete HCRateThread;
+    delete capTimer;
+
+    delete sVis;
+    delete main;
+    delete matViewer;
+    delete sMenu;
+    delete notes;
+
+    avformat_free_context(formCtx);
+
     delete ui;
 }
 
@@ -272,102 +283,6 @@ void Widget::encodeAndSave()
     }
 }
 
-void Widget::packetQueueInit(PacketQueue *q)
-{
-    q = new PacketQueue();
-    q->unlockMutex();
-}
-
-int Widget::packetQueuePut(PacketQueue *q, AVPacket *packet)
-{
-    AVPacketList *pkt1;
-
-    if(av_dup_packet(packet) < 0){
-        qDebug() << "Packet error: packetQueuePut";
-        return -1;
-    }
-
-    pkt1 = (AVPacketList*)av_malloc(sizeof(AVPacketList));
-
-    if(!pkt1){
-        qDebug() << "Error allocating packet list: packetQueuePut";
-        return -1;
-    }
-
-    pkt1->pkt = *packet;
-    pkt1->next = NULL;
-
-    q->mutex.lock();
-
-    if(!q->lastPkt)
-        q->setFirstPkt(pkt1);
-
-    else
-        q->lastPkt->next = pkt1;
-
-    q->setLastPkt(pkt1);
-    q->nb_packets++;
-    q->size += pkt1->pkt.size;
-
-    q->cond->conditionSignal();
-    q->mutex.unlock();
-
-    return 0;
-
-}
-
-int Widget::packetQueueGet(PacketQueue *q, AVPacket *packet, int block)
-{
-    AVPacketList *pkt1;
-    int ret;
-
-    q->mutex.lock();
-
-    for(;;){
-
-    if(globalVideoState->quit){
-        return -1;
-        break;
-    }
-
-    pkt1 = q->firstPkt;
-
-    if(pkt1){
-        q->firstPkt = pkt1->next;
-
-        if(!q->firstPkt)
-            q->lastPkt = NULL;
-
-        q->nb_packets--;
-        q->size -= pkt1->pkt.size;
-
-        *packet = pkt1->pkt;
-        av_free(pkt1);
-        ret = 1;
-        break;
-    }else if(!block){
-        ret = 0;
-        break;
-    }else{
-        qDebug() << "conditinal wait with semaphores";
-        //conditionwait with semaphores
-    }
-
-    }
-    q->mutex.unlock();
-    return ret;
-
-}
-
-double Widget::getAudioClock(VideoState *is)
-{
-    double pts;
-    int hw_buf_size, bytes_per_sec, n;
-
-    pts = is->audio_clock;
-
-    return pts;
-}
 
 void Widget::setImgLab(QPixmap pix)
 {
@@ -393,10 +308,198 @@ void Widget::drawMat(Mat mat)
     matViewer->show();
 }
 
+void Widget::drawMat2()
+{
+  //  if(cap.isOpened()){
+        Mat frame;
+
+        cap >> frame;
+
+        if(!frame.empty()){
+
+            frameStore.append(frame);
+            fillBuffers(frame);
+            Size reSiz;
+            reSiz.height = frame.rows/2;
+            reSiz.width = frame.cols/2;
+
+            Mat temp;
+            cv::resize(frame,temp,reSiz);
+            matViewer->showImg(temp);
+
+        }
+
+
+   // }
+}
+
+void Widget::fillBuffers(Mat mat)
+{
+
+    if(toggle){
+
+        Mat reSiz;
+        sz.height = mat.rows/8;
+        sz.width = mat.cols/8;
+        cv::resize(mat,reSiz,sz);
+
+    ldBuffer.append(mat);
+    crBuffer.append(reSiz);
+    }
+
+    if(toggle2){
+        Mat reSiz;
+        sz.height = mat.rows/8;
+        sz.width = mat.cols/8;
+        cv::resize(mat,reSiz,sz);
+
+         bsBuffer.append(reSiz);
+
+    }
+
+
+
+    frameCounter++;
+
+    if(frameCounter % 50 == 0){
+
+        if(toggle == true){
+            emit ldcrbufferFull();
+
+        }
+
+
+        toggle ^= true;
+        //qDebug() << frameCounter << " " << toggle;
+        //qDebug() << bsBuffer.size();
+    }
+
+    if(frameCounter % 100 == 0){
+        if(toggle2 == true){
+            emit bsbufferFull();
+        }
+
+        toggle2 ^= true;
+    }
+
+
+
+
+
+}
+
+void Widget::usingImShow()
+{
+    for(int i = 0; i < cap.get(CV_CAP_PROP_FRAME_COUNT); i++){
+        Mat frame;
+
+        cap >> frame;
+
+        if(!frame.empty()){
+
+            Size reSiz;
+            reSiz.height = frame.rows/2;
+            reSiz.width = frame.cols/2;
+
+            Mat temp;
+            cv::resize(frame,temp,reSiz);
+
+
+            imshow("Video",temp);
+        }
+
+        waitKey(5);
+    }
+}
+
+void Widget::recHighCuts(bool rec)
+{
+   // qDebug() << "Cut Rates";
+}
+
+void Widget::recBS(bool rec)
+{
+    //qDebug() << "Black Screen";
+}
+
+void Widget::recNoLogo(bool rec)
+{
+   // qDebug() << "No Logo";
+}
+
+void Widget::addFramesToThreads()
+{
+
+    if(!HCRateThread->isRunning()){
+       // qDebug() << "HC Thread";
+        HCRateThread->addFrames(crBuffer);
+        HCRateThread->start();
+    }
+
+
+
+    if(!LDThread->isRunning()){
+      LDThread->addFrames(ldBuffer);
+      LDThread->start();
+    }
+
+    crBuffer.clear();
+    ldBuffer.clear();
+}
+
+void Widget::addFramesToBSThread()
+{
+
+    if(!bsDetectThread->isRunning()){
+        //qDebug() << "BS Thread";
+        bsDetectThread->readInFrames(bsBuffer);
+        bsDetectThread->start();
+    }
+
+     bsBuffer.clear();
+}
+
 
 
 
 void Widget::on_horizontalSlider_sliderMoved(int position)
 {
     ui->horizontalSlider->setValue(position);
+}
+
+void Widget::keyPressEvent(QKeyEvent *a)
+{
+    //Do a switch here with a char to determine which key was pressed...
+    //May be a long switch statement.
+
+    int keyPressed = a->key();
+
+
+
+    switch(keyPressed){
+
+    case 65:
+        mtoggle ^= true;
+        main->setVisible(mtoggle);
+        break;
+
+    case 66:
+        stoggle ^= true;
+        sMenu->setVisible(stoggle);
+        break;
+
+    case 67:
+        sliderToggle ^= true;
+        sVis->setVisible(sliderToggle);
+        break;
+
+    case 68:
+        notifs ^= true;
+        notes->setVisible(notifs);
+        break;
+
+
+
+
+    }
 }
