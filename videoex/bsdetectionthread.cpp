@@ -1,10 +1,6 @@
 #include "bsdetectionthread.h"
 
-BSDetectionThread::BSDetectionThread(QVector<Mat> images, QObject *parent):
-    QThread(parent)
-{
-    deter = images;
-}
+
 
 BSDetectionThread::BSDetectionThread(QObject *parent):
     QThread(parent)
@@ -35,9 +31,9 @@ void BSDetectionThread::run()
             }
         }
 
-        //qDebug() << sum;
+        //qDebug() << "Sum in bs detect " << sum;
 
-        if(sum < 500){
+        if(sum < 1000000){
 
           //     qDebug() << "Black Screen Detected";
           //  emit sendMyMat(temp);
@@ -71,7 +67,7 @@ void BSDetectionThread::run()
 }
 
 
-void BSDetectionThread::readInFrames(QVector<Mat> mats)
+void BSDetectionThread::readInFrames(QList<Mat> mats)
 {
 
     deter = mats;

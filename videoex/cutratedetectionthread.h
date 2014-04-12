@@ -14,7 +14,10 @@
 #include <stdio.h>
 #include <iostream>
 #include <math.h>
-#include <cmath>
+#include <QList>
+//#include <cmath>
+
+
 
 #include "opencv2/core/core.hpp"
 #include "opencv2/highgui/highgui.hpp"
@@ -33,6 +36,8 @@ using namespace std;
 class CutRateDetectionThread : public QThread
 {
     Q_OBJECT
+//   private slots:
+//       void timedWait(int timeToWait);
 public:
     explicit CutRateDetectionThread(QVector<QImage> frameSamples,int index, QObject *parent = 0);
     explicit CutRateDetectionThread(QVector<QImage> frameSamples, QObject *parent = 0);

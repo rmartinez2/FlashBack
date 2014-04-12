@@ -9,6 +9,7 @@
 #include <QDebug>
 #include <QVector>
 #include <QImage>
+#include <QList>
 #include <iostream>
 
 
@@ -21,10 +22,10 @@ class BSDetectionThread: public QThread
     Q_OBJECT
 
 public:
-    explicit BSDetectionThread(QVector<Mat> images, QObject *parent = 0);
+    explicit BSDetectionThread(QList<Mat> images, QObject *parent = 0);
     explicit BSDetectionThread(QObject *parent = 0);
 
-    QVector<Mat> deter;
+    QList<Mat> deter;
 
     void run();
 
@@ -33,7 +34,7 @@ signals:
     void sendMyMat(Mat);
 
 public slots:
-    void readInFrames(QVector<Mat> mats);
+    void readInFrames(QList<Mat> mats);
 
 
 };

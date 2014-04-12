@@ -27,7 +27,6 @@
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
-
 #include <stdlib.h>
 
 #include <QVideoWidget>
@@ -35,12 +34,15 @@
 #include <QGraphicsView>
 #include <QGraphicsScene>
 
-
+//#include "packetqueue.h"
+//#include "videopicture.h"
+//#include "videostate.h"
+//#include "qcondition.h"
 #include "videothread.h"
-#include "audiothread.h"
-#include "decodeavthread.h"
+//#include "audiothread.h"
+//#include "decodeavthread.h"
 
-#include "frameglwidget.h"
+//#include "frameglwidget.h"
 #include "cvmatviewer.h"
 #include "playbackthread.h"
 
@@ -50,22 +52,22 @@
 
 #include "mainmenu.h"
 #include "sidemenu.h"
-#include "slidervisual.h"
-#include "notificationwidget.h"
 
+#include <QList>
 
-extern "C"{
+extern "C"
+{
     #include "libavcodec/avcodec.h"
-    #include "libavformat/avformat.h"
-    #include "libavutil/imgutils.h"
-    #include "libavutil/opt.h"
-    #include "libswscale/swscale.h"
+   #include "libavformat/avformat.h"
+   #include "libavutil/imgutils.h"
     #include "libavformat/avio.h"
-    #include "libavutil/avstring.h"
     #include "libavutil/time.h"
-    #include "libswresample/swresample.h"
+    #include "libswscale/swscale.h"
+   // #include "libavresample/avresample.h"
+   #include "libavutil/opt.h"
 
 }
+//#include "cap_ffmpeg_impl.hpp"
 
 
 namespace Ui {
@@ -92,18 +94,16 @@ public:
     QAudioOutput *output;
 
 
+    //VideoState *globalVideoState;
     AVFormatContext *formCtx = NULL;
+
     int i, streamIndex, svIndex;
-    AVStream *audioStream, *videoStream;
-    AVCodecContext  *pCodecCtx = NULL, *eCodecCtx = NULL, *vCodecCtx = NULL;
-    AVCodec *pCodec = NULL, *eCodec = NULL, *vCodec = NULL;
-    AVFrame *frame1 = NULL, *vFrame = NULL;
-    AVPacket packet;
+
     int frame1Finished;
     int numBytes;
     int buffersize1;
     uint *samples1 = NULL;
-    UINT8 *medBuffer = NULL;
+
 
     QMutex mutex;
 
@@ -119,9 +119,9 @@ public:
 
     FILE *f;
 
-    VideoThread *vThread;
-    AudioThread *aThread;
-    decodeAVThread *avThread;
+    //VideoThread *vThread;
+    //AudioThread *aThread;
+    //decodeAVThread *avThread;
 
     QGraphicsScene *myScene;
 
@@ -129,10 +129,14 @@ public:
     playBackThread *pbThread;
 
     VideoCapture cap;
+/**************************************************/
+    CvCapture* mCvCapturePtr;
+    VideoWriter writer;
+
 
     QTimer *capTimer;
 
-    QVector<Mat> bsBuffer;
+    QList<Mat> bsBuffer;
     QVector<Mat> ldBuffer;
     QVector<Mat> crBuffer;
     QVector<Mat> frameStore;
@@ -154,29 +158,26 @@ public:
     SideMenu *sMenu;
     bool stoggle;
 
-    SliderVisual *sVis;
-    bool sliderToggle;
-
-    NotificationWidget *notes;
-    bool notifs;
-
 
 
 
 public slots:
 
    void proFrameandUpdateGUI();
-   void SaveFrame(AVFrame *pFrame, int width, int height, int iFrame);
+   //void SaveFrame(AVFrame *pFrame, int width, int height, int iFrame);
    void finishedPlaying(QAudio::State state);
-   void encodeAndSave();
-
+  // void encodeAndSave();
+   //void packetQueueInit(PacketQueue *q);
+   //int packetQueuePut(PacketQueue *q, AVPacket *packet);
+   //int packetQueueGet(PacketQueue *q, AVPacket *packet, int block);
+   //double getAudioClock(VideoState *is);
    void setImgLab(QPixmap pix);
    void setUpGView();
    void drawMat(Mat mat);
    void drawMat2();
    void fillBuffers(Mat mat);
    void usingImShow();
-   void recHighCuts(bool rec);
+   void recHighCuts();
    void recBS(bool rec);
    void recNoLogo(bool rec);
 

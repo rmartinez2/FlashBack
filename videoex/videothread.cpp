@@ -24,7 +24,7 @@ VideoThread::VideoThread(AVFormatContext *formCtx, playBackThread *thread, QObje
         qDebug() << "Failed to open codec";
     }
 
-    HCRateThread = new CutRateDetectionThread();
+
     playBack = thread;
 
    // connect(playBack,SIGNAL(sendMat(Mat)),this,SLOT(sendMatsPB(Mat)));
@@ -36,103 +36,45 @@ void VideoThread::run(){
     qDebug() << "Video Thread Running";
     //vBuf.open(QBuffer::WriteOnly);
 
+    while(av_read_frame(formCtx,&packet) == 0)
+    {
 
-   // QMutexLocker locker(&mutex);
-    while(av_read_frame(formCtx,&packet) == 0){
+        if(packet.stream_index == videostream->index)
+        {
 
-        //glClear(GL_COLOR_BUFFER_BIT);
+            while(packet.size > 0)
+            {
 
+                int len = 0,framefinished = 0;
 
-        if(packet.stream_index == videostream->index){
+                len = avcodec_decode_video2(vCodecCtx, vFrame, &framefinished, &packet);
 
-            while(packet.size > 0){
-
-            int len = 0,framefinished = 0;
-
-             len = avcodec_decode_video2(vCodecCtx, vFrame, &framefinished, &packet);
-
-            if(framefinished){
+                if(framefinished)
+                {
                 //sws_scale(imgConvertCtx,(byte const* const*)vFrame->data,vFrame->linesize,0,vCodecCtx->height,vFrameRGB->data,vFrameRGB->linesize);
 
-            sws_scale(imgConvertCtx,vFrame->data,vFrame->linesize,
-                          0,vCodecCtx->height,bgrFrame->data,bgrFrame->linesize);
+                    sws_scale(imgConvertCtx,vFrame->data,vFrame->linesize,
+                            0,vCodecCtx->height,bgrFrame->data,bgrFrame->linesize);
+
+                    cv::Mat myFrame(vFrame->height, vFrame->width , CV_8UC3 ,bgrFrame->data[0]);
 
 
+                    if(!myFrame.empty()){
 
+                            //qDebug() << "Not Empty! :D";
+                           resize(myFrame,myAnalyticFrame,nSz);
+                           emit sendMat(myAnalyticFrame);
+                        }
 
-               //Fill mat object with pixel data
-               for(int i = 0; i < vCodecCtx->height; i++){
-                   for(int j = 0; j < vCodecCtx->width; j++){
-                       myFrame.at<Vec3b>(i,j)[0] = bgrFrame->data[0][i * bgrFrame->linesize[0] + j * 3 + 0];
-                       myFrame.at<Vec3b>(i,j)[1] = bgrFrame->data[0][i * bgrFrame->linesize[0] + j * 3 + 1];
-                       myFrame.at<Vec3b>(i,j)[2] = bgrFrame->data[0][i * bgrFrame->linesize[0] + j * 3 + 2];
-                   }
-               }
+                }
+                packet.size -= len;
+                packet.data += len;
 
-
-
-               //if Frame is legitimate, append to vector of mats
-
-               if(!myFrame.empty()){
-
-
-                       resize(myFrame,myAnalyticFrame,nSz);
-                       analytics.append(myAnalyticFrame);
-
-
-
-
-
-
-          }
-              // qDebug() << analytics.size();
-              // if(analytics.size() % 5 == 0 && AToggle == true){
-
-             //          AToggle = false;
-
-
-                      /* QSize sz;
-                       sz.setHeight(destHeight);
-                       sz.setWidth(destWidth);
-
-                      // HCRateThread = new CutRateDetectionThread(analytics,sz);
-                      // HCRateThread->setFPS(FPS);
-                       HCRateThread->start();*/
-
-
-
-                //   }else{
-                //        AToggle = true;
-                      // HCRateThread->addFrames();
-                      // qDebug() << "Add more frames that were buffered here";
-
-              // }
-        }
-            packet.size -= len;
-            packet.data += len;
-
-          }
+            }
         }
         av_free_packet(&packet);
 
     }
-
-
-
-
-
-   // QObject::connect(HCRateThread,SIGNAL(sendPixMap(QPixmap)),this,SLOT(sendPixHS(QPixmap)));
-
-
-   /* for(int i = 0; i < pVec.size(); i++){
-        emit sendPix(pVec.at(i));
-
-        msleep(32);
-
-    }*/
-
-
-
 }
 
 void VideoThread::initVideoFrame(){
@@ -154,19 +96,21 @@ void VideoThread::initVideoFrame(){
 
 }
 
-void VideoThread::findVideoStream(){
-
+void VideoThread::findVideoStream()
+{
     vidStream = av_find_best_stream(formCtx,AVMEDIA_TYPE_VIDEO,-1,-1,&vCodec,0);
 
-    if(vidStream < 0){
+    if(vidStream < 0)
+    {
         qDebug() << "Could Not find Video Stream in Vid Thread";
-    }else{
+    }
+    else
+    {
         videostream = formCtx->streams[vidStream];
         vCodecCtx = videostream->codec;
         vCodecCtx->codec = vCodec;
         FPS = videostream->avg_frame_rate.num;
     }
-
 }
 
 bool VideoThread::checkCodec()
@@ -195,18 +139,18 @@ void VideoThread::setDstInts()
     destHeight = vCodecCtx->height;
     destWidth = vCodecCtx->width;
 
-    nSz.height = destHeight/16;
-    nSz.width = destWidth/16;
+    nSz.height = destHeight/4;
+    nSz.width = destWidth/4;
 }
 
 void VideoThread::allocRGBPic()
 {
     int numBytes = avpicture_get_size(AV_PIX_FMT_RGB24,destWidth,destHeight);
-    byte *buffer = (byte*)av_malloc(numBytes*sizeof(byte));
+    uint8_t *buffer = (uint8_t*)av_malloc(numBytes*sizeof(uint8_t));
     int chek = avpicture_fill((AVPicture*)vFrameRGB,buffer,AV_PIX_FMT_RGB24,vCodecCtx->width,vCodecCtx->height);
 
     int numBgrBytes = avpicture_get_size(AV_PIX_FMT_BGR24,vCodecCtx->width, vCodecCtx->height);
-    byte *bufBGR = (byte*)av_malloc(numBgrBytes*sizeof(byte));
+    uint8_t *bufBGR = (uint8_t*)av_malloc(numBgrBytes*sizeof(uint8_t));
     int chek2 = avpicture_fill((AVPicture*)bgrFrame,bufBGR,AV_PIX_FMT_BGR24,vCodecCtx->width,vCodecCtx->height);
 
     if(chek < 0){

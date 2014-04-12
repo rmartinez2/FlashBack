@@ -21,7 +21,7 @@ logoDetectionThread::logoDetectionThread(QObject *parent):
     logoMat = imread("C:\\Users\\Rene\\Desktop\\LogoTheMiddleLg.jpg");
 
     GaussianBlur(logoMat,logoGray,Size(3,3),0,0,BORDER_DEFAULT);
-    cvtColor(logoGray,logoGray,CV_BGR2GRAY);
+    //cvtColor(logoGray,logoGray,CV_BGR2GRAY);
 
     Sobel(logoGray,gradX,ddepth,1,0,3,scale,delta,BORDER_DEFAULT);
     convertScaleAbs(gradX,absGradX);
@@ -55,7 +55,7 @@ void logoDetectionThread::run()
 
 
         GaussianBlur(cpy,cpy,Size(3,3), 0, 0, BORDER_DEFAULT);
-        cvtColor(cpy,cpy,CV_BGR2GRAY);
+        //cvtColor(cpy,cpy,CV_BGR2GRAY);
 
         Sobel(cpy,gradX,ddepth,1,0,3,scale,delta,BORDER_DEFAULT);
         convertScaleAbs(gradX,absGradX);

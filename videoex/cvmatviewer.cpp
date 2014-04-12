@@ -16,7 +16,7 @@ QSize cvMatViewer::minimumSizeHint() const
 }
 
 
-void cvMatViewer::showImg(Mat &img)
+void cvMatViewer::showImg(Mat img)
 {
 
     switch(img.type()){

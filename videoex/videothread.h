@@ -74,7 +74,8 @@ public:
     Mat myFrame;
     Mat myAnalyticFrame;
     QVector<Mat> myMats;
-    QVector<Mat> analytics;
+    QVector<Mat> analytics1;
+    QVector<Mat> analytics2;
 
     playBackThread *playBack;
 
@@ -87,6 +88,7 @@ signals:
     void tFinished();
     void sendQImg(QImage);
     void sendMat(Mat);
+
     
 public slots:
     void initVideoFrame();

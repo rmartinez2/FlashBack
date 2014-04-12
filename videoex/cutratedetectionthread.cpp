@@ -1,5 +1,6 @@
 #include "cutratedetectionthread.h"
 
+
 //Store stdDev2 than get the stdDev2 of th next 5 frames, compare to current stdDev and StdDev2 that's stored
 //decide if on commercial break from that realization
 
@@ -8,6 +9,13 @@
 //2) Percentage diff from current stdDev
 
 //To Effectively time the cuts per minute, implement a timer that times out every 60 seconds than restarts at 0
+
+//void CutRateDetectionThread::timedWait(int timeToWait)
+//{
+//    //Mutex mMutex;
+//    //time_t timer;
+
+//}
 
 CutRateDetectionThread::CutRateDetectionThread(QVector<QImage> frameSamples, int index, QObject *parent) :
     QThread(parent)
@@ -212,17 +220,17 @@ void CutRateDetectionThread::run()
        long long mean = 0;
 
 
-       if(seconds == 30){
+       if(seconds == 10){
            seconds = 0;
 
-           if(cutsPerSec > 10){
+           if(cutsPerSec > 5){
               // qDebug() << "High Cut Rate";
             emit highCuts(true);
            }else{
-              // qDebug() << "Regular Cut Rate";
+               qDebug() << "Regular Cut Rate";
            }
 
-          // qDebug() << cutsPerSec;
+           qDebug() << cutsPerSec;
 
            cutsPerSec = 0;
 

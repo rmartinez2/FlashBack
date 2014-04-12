@@ -26,7 +26,7 @@ signals:
     
 public slots:
 
-    void showImg(Mat &img);
+    void showImg(Mat img);
 
 protected:
     void paintEvent(QPaintEvent *event);
