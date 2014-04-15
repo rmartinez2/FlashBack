@@ -14,11 +14,11 @@ QSize MainMenu::sizeHint()
 
 void MainMenu::paintEvent(QPaintEvent *event)
 {
-
-
+    Q_UNUSED(event);
 
     QPainter painter(this);
 
+    this->setWindowOpacity(0.80);
     painter.drawRect(this->geometry());
 
 
