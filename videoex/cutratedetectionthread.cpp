@@ -212,14 +212,15 @@ void CutRateDetectionThread::run()
        long long mean = 0;
 
 
-       if(seconds == 30){
+       if(seconds == 10){
            seconds = 0;
 
-           if(cutsPerSec > 10){
-              // qDebug() << "High Cut Rate";
+           if(cutsPerSec > 5){
+               //qDebug() << "High Cut Rate";
             emit highCuts(true);
            }else{
               // qDebug() << "Regular Cut Rate";
+               emit highCuts(false);
            }
 
           // qDebug() << cutsPerSec;
@@ -288,10 +289,11 @@ void CutRateDetectionThread::run()
                noCut = dig2;
 
 
-          // qDebug() << numbofDigits(diff) << " " << noCut;
+           //qDebug() << numbofDigits(diff) << " " << noCut;
 
            if(numbofDigits(diff) > noCut){
                cutsPerSec++;
+               //qDebug() << cutsPerSec;
                // qDebug() << "NO CUT";
            }
 
@@ -305,21 +307,7 @@ void CutRateDetectionThread::run()
 
 
 
-
-       //qDebug() << stdDev;
-
-
-      //  char Check[50];
-      //  std::cin >> Check;
-
-
-
-
-
        currentFrameSums.clear();
-
-
-      // qDebug() << "Mean of Frames: " << mean;
 
 
 

@@ -1,7 +1,13 @@
 #ifndef MAINMENU_H
 #define MAINMENU_H
 
-#include <QWidget>
+#if QT_VERSION >= 0x050000
+#include <QtWidgets>
+#else
+#include <QtGui>
+#endif
+
+
 #include <QtCore>
 #include <QPainter>
 

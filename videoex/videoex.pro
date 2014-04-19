@@ -4,9 +4,9 @@
 #
 #-------------------------------------------------
 
-QT       += core gui multimedia multimediawidgets widgets opengl
+QT       += core gui
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets multimedia multimediawidgets opengl
 
 TARGET = videoex
 TEMPLATE = app
@@ -16,13 +16,9 @@ SOURCES += main.cpp\
         widget.cpp \
     mat2qimage.cpp \
     videothread.cpp \
-    audiothread.cpp \
-    decodeavthread.cpp \
-    audiosdthread.cpp \
     bsdetectionthread.cpp \
     cutratedetectionthread.cpp \
     logodetectionthread.cpp \
-    frameglwidget.cpp \
     cvmatviewer.cpp \
     playbackthread.cpp \
     mainmenu.cpp \
@@ -32,18 +28,17 @@ SOURCES += main.cpp\
     seekerbar.cpp \
     seekerbarticker.cpp \
     timeitem.cpp \
-    pixeldatathread.cpp
+    pixeldatathread.cpp \
+    recordingoptions.cpp \
+    recordings.cpp \
+    recordplayback.cpp
 
 HEADERS  += widget.h \
     mat2qimage.h \
     videothread.h \
-    audiothread.h \
-    decodeavthread.h \
-    audiosdthread.h \
     bsdetectionthread.h \
     cutratedetectionthread.h \
     logodetectionthread.h \
-    frameglwidget.h \
     cvmatviewer.h \
     playbackthread.h \
     mainmenu.h \
@@ -53,7 +48,10 @@ HEADERS  += widget.h \
     seekerbar.h \
     seekerbarticker.h \
     timeitem.h \
-    pixeldatathread.h
+    pixeldatathread.h \
+    recordingoptions.h \
+    recordings.h \
+    recordplayback.h
 
 FORMS    += widget.ui
 

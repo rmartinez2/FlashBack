@@ -51,18 +51,20 @@ public:
 
     void run();
 
+    ~VideoThread();
+
     AVPacket packet;
-    AVFrame *vFrame, *vFrameRGB, *bgrFrame, *bgrFrame2, *vFrame2;
-    AVFormatContext *formCtx,*formatCtx2;
+    AVFrame *vFrame, *vFrameRGB, *bgrFrame, *bgrFrame2, *vFrame2, *rFrame, *rBGRFrame;
+    AVFormatContext *formCtx,*formatCtx2, *recFormCtx;
     QBuffer vBuf;
     QByteArray vData;
-    AVStream *videostream1,*videostream2;
-    AVCodecContext *vCodecCtx1 = NULL, *vCodecCtx2 = NULL;
-    AVCodec *vCodec = NULL, *vCodec2;
-    AVDictionary *cDict = NULL;
-    SwsContext *imgConvertCtx, *imgConvertCtx2;
-    int vidStream,vidStream2;
-    int destWidth, destHeight, destFmt, destWidth2, destHeight2;
+    AVStream *videostream1,*videostream2, *recVidStream;
+    AVCodecContext *vCodecCtx1, *vCodecCtx2, *rCodecCtx;
+    AVCodec *vCodec, *vCodec2, *rCodec;
+    AVDictionary *cDict;
+    SwsContext *imgConvertCtx, *imgConvertCtx2, *rImgCovtCtx;
+    int vidStream,vidStream2, rStream;
+    int destWidth, destHeight, destFmt, destWidth2, destHeight2, rDestWidth, rDestHeight;
     QVector <QImage>  qVec;
     QVector <QPixmap> pVec;
 
@@ -73,7 +75,8 @@ public:
 
     bool AToggle;
 
-    bool FT;
+    bool breaker;
+    bool recPlayBack;
 
     int FPS;
 
@@ -108,6 +111,15 @@ public slots:
     void sendPixVec();
     void sendPixHS(QPixmap pix);
     void sendMatsPB(Mat mat);
+    void vThreadBreak(bool breaker);
+
+    bool recordContext(AVFormatContext *recFrmCtx);
+    void initRecordFrame();
+    void findRecordStream();
+    bool checkRecCodec();
+    void initRecConverter();
+    void setRecDstInts();
+    void allocBGRPic();
 
 
 

@@ -18,14 +18,26 @@ public:
     QPushButton *button1;
     QPushButton *button2;
     QPushButton *button3;
-    QPushButton *button4;
-    QPushButton *button5;
-    QPushButton *button6;
+
+
+//    QPushButton *button4;
+//    QPushButton *button5;
+//    QPushButton *button6;
+
+
+    bool fbToggle;
     
 signals:
+    void toggleFB(bool);
+    void showRecordings(bool);
+    void showRecordingOpts(bool);
     
 public slots:
     void setXYWH(int x, int y, int w, int h);
+    void fbToggled();
+    void showRecordingsMenu();
+    void showRecordingSettings();
+
     
 };
 

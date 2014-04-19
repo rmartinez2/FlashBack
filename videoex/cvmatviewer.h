@@ -47,6 +47,8 @@ public:
     QTimer *pausedTimer;
 
     pixelDataThread *dataCpy;
+
+    bool isPIP;
     
 signals:
     

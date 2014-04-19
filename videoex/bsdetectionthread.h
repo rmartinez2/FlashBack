@@ -26,6 +26,9 @@ public:
 
     QVector<Mat> deter;
 
+    Point p1;
+    Point p2;
+
     void run();
 
 signals:
@@ -34,6 +37,7 @@ signals:
 
 public slots:
     void readInFrames(QVector<Mat> mats);
+    void readInPointVals(Point p1, Point p2);
 
 
 };

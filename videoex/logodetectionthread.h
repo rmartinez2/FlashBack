@@ -5,6 +5,7 @@
 #include <QImage>
 #include <QtCore>
 #include <QVector>
+#include <QFont>
 
 #include "iostream"
 
@@ -43,6 +44,10 @@ public:
     int scale;
     int delta;
     int ddepth;
+    Point p1;
+    Point p2;
+
+    const char* fileName;
     
 signals:
     void ldSendMat(Mat myMats);
@@ -52,6 +57,8 @@ public slots:
 
     void addFrames(QVector<Mat> frames);
     void setLogoLoc(int x1, int y1, int x2, int y2);
+    void setLogoLoc(Point p1, Point p2);
+    void setLogo(const char *fileName);
 
     
 };

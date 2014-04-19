@@ -20,10 +20,6 @@ using namespace cv;
 //ff would move through container the other way never passing or becoming greater than index
 //helper would never be less than 0, if 0 is reached just begin play back from the beginning
 
-
-
-
-
 AVCodecContext *setCodecCtxFields(AVCodecContext *stream, AVCodecContext *enc);
 
 Widget::Widget(QWidget *parent) :
@@ -32,12 +28,18 @@ Widget::Widget(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    this->window()->setWindowTitle("FlashBack");
+
     av_register_all();
 
     setUpGView();
 
     frameCounter = 0;
+    frameCounter2 = 0;
+
     toggle = true;
+    toggle3 = true;
+
     mtoggle = false;
     stoggle = false;
     sliderToggle = false;
@@ -46,20 +48,48 @@ Widget::Widget(QWidget *parent) :
 
     primary = true;
 
+    isPIP = false;
+
+     ldPrimary = false;
+     bsPrimary = false;
+     crPrimary = false;
+
+     ldSecondary = false;
+     bsSecondary = false;
+     crSecondary = false;
+
+     primaryOnComm = false;
+     secondaryOnComm = false;
+
+
     playBackIndex = 0;
 
     ui->graphicsView->setAlignment(Qt::AlignLeft | Qt::AlignTop);
+    timer = new QTimer(this);
+    timer->setInterval(0.5);
+
+    commercialTimer1 = new QTimer(this);
+    commercialTimer1->setInterval(30000);
+
+    commercialTimer2 = new QTimer(this);
+    commercialTimer2->setInterval(30000);
+
+    notesTimer = new QTimer(this);
+    notesTimer->setSingleShot(true);
+    notesTimer->setInterval(5000);
 
 
     const char* filename = "C:\\Users\\Rene\\Desktop\\Test.mp2";
     char* Path = "C:\\Users\\Rene\\Desktop\\L&O.mpg";
     char* Path2 = "C:\\Users\\Rene\\\Desktop\\EyeForEye.mpg";
 
-    AVDictionary *optionsDict = NULL;
+    const char* logo1 = "C:\\Users\\Rene\\Desktop\\LogoTheMiddleLg.jpg";
+    const char* logo2 = "C:\\Users\\Rene\\Desktop\\LogoCW.jpg";
 
-    // "C:\\Users\\Rene\\Desktop\\silence.mp3" "C:\\Users\\Rene\\Desktop\\apollo_17_stroll.mpg" C:\\Users\\Rene\\Desktop\\AstroInMM.mpg
-    //C:\\Users\\Rene\\Desktop\\AstroWithCuts.mpg
+    recordFolder = "C:/FlashBackRecording";
+   // "C:\\Users\\Rene\\Desktop\\L&O.mpg"
 
+    //Demo
     if(avformat_open_input(&formCtx1,"C:\\Users\\Rene\\Desktop\\L&O.mpg",NULL,NULL) != 0){
         qDebug() << "Did not open video";
     }
@@ -68,9 +98,7 @@ Widget::Widget(QWidget *parent) :
     if(avformat_find_stream_info(formCtx1,NULL) < 0){
         qDebug() << "Couldn't find stream info";
     }
-    //apollo_17_stroll.mpg
 
-    //debugging info on video and stream
     av_dump_format(formCtx1,0,"C:\\Users\\Rene\\Desktop\\L&O.mpg",0);
 
     if(avformat_open_input(&formCtx2,"C:\\Users\\Rene\\Desktop\\EyeForEye.mpg",NULL,NULL) != 0){
@@ -81,72 +109,106 @@ Widget::Widget(QWidget *parent) :
     if(avformat_find_stream_info(formCtx2,NULL) < 0){
         qDebug() << "Couldn't find stream info2";
     }
-    //apollo_17_stroll.mpg
 
-    //debugging info on video and stream
     av_dump_format(formCtx2,0,"C:\\Users\\Rene\\Desktop\\EyeForEye.mpg",0);
 
 
-
-    //qDebug() << "Show me the money";
-
-
-    //ui->horizontalSlider->setRange(0,(int)formCtx->duration/30000);
-
    streamIndex = -1;
    svIndex = -1;
-   streamIndex = av_find_best_stream(formCtx1,AVMEDIA_TYPE_AUDIO,-1,-1,&pCodec,0);
+  // streamIndex = av_find_best_stream(formCtx1,AVMEDIA_TYPE_AUDIO,-1,-1,&pCodec,0);
    svIndex = av_find_best_stream(formCtx1,AVMEDIA_TYPE_VIDEO,-1,-1,&vCodec,0);
-
-    if(streamIndex > 0){
-
-          audioStream = formCtx1->streams[streamIndex];
-          //pCodecCtx = audioStream->codec;
-        //  pCodecCtx->codec = pCodec;
+   svIndex2 = av_find_best_stream(formCtx2,AVMEDIA_TYPE_VIDEO,-1,-1,&vCodec2,0);
 
 
-        //qDebug() << "Could not find audio stream in video";
-    }
 
-    if(svIndex > 0){
+//    if(streamIndex > 0){
+
+//          audioStream = formCtx1->streams[streamIndex];
+//          //pCodecCtx = audioStream->codec;
+//        //  pCodecCtx->codec = pCodec;
+
+
+//        //qDebug() << "Could not find audio stream in video";
+//    }
+
+    if(svIndex >= 0 && svIndex2 >= 0){
+
         videoStream = formCtx1->streams[svIndex];
         vCodecCtx = videoStream->codec;
         vCodecCtx->codec = vCodec;
 
-
         rect.setHeight(vCodecCtx->height/2);
         rect.setWidth(vCodecCtx->width/2);
 
+        videoStream2 = formCtx2->streams[svIndex2];
+        vCodecCtx2 = videoStream2->codec;
+        vCodecCtx2->codec = vCodec;
+
+        rect2.setHeight(vCodecCtx2->height);
+        rect2.setWidth(vCodecCtx2->width);
+
+       AVRational rat1 = videoStream->r_frame_rate;
+       AVRational rat2  = videoStream2->r_frame_rate;
+
+       vid1FPS = rat1.num/rat1.den;
+       vid2FPS = rat2.num/rat2.den;
+
        // qDebug() << rect.height() << " " << rect.width();
+        QRect rect3;
+        rect3.setHeight(rect.height() + 7);
+        rect3.setWidth(rect.width() + 7);
+        ui->graphicsView->setGeometry(rect3);
+        this->setGeometry(rect3);
 
-        ui->graphicsView->setGeometry(rect);
-        this->setGeometry(rect);
 
-
+    }else{
+        qDebug() << "Could not find video streams" << svIndex << " " << svIndex2;
     }
 
     vThread = new VideoThread(formCtx1,formCtx2);
 
 
     capTimer = new QTimer(this);
-   // cap1.open(Path);
+    //cap.open(Path2);
     //cap2.open(Path2);
 //    double fps = cap.get(CV_CAP_PROP_FPS);
-//   // qDebug() << "FPS " << fps;
+   // qDebug() << "FPS " << fps;
 //    capTimer->setInterval(1);
 
     playBackTimer = new QTimer(this);
-    playBackTimer->setInterval(35);
+    playBackTimer->setInterval(0.5);
 
 
     HCRateThread = new CutRateDetectionThread();
     bsDetectThread = new BSDetectionThread();
     LDThread = new logoDetectionThread();
 
+    HCRateThread2 = new CutRateDetectionThread();
+    bsDetectThread2 = new BSDetectionThread();
+    LDThread2 = new logoDetectionThread();
+
+    Point p11((int)900, (int)500);
+    Point p12((int)1100, (int)700);
+    Point p21((int)825, (int)575);
+    Point p22((int)1015, (int)650);
+
+
+    LDThread->setLogoLoc(p11,p12);
+    LDThread->setLogo(logo1);
+
+    LDThread2->setLogoLoc(p21,p22);
+    LDThread2->setLogo(logo2);
+
+    bsDetectThread->readInPointVals(p11,p12);
+    bsDetectThread2->readInPointVals(p21,p22);
+
+
    // main = new MainMenu();
     sMenu = new SideMenu();
     sVis = new SliderVisual();
     notes = new NotificationWidget();
+    recOps = new RecordingOptions();
+    recsWin = new Recordings();
 
     int menuY = 0;
     int menuX = 0;
@@ -154,7 +216,8 @@ Widget::Widget(QWidget *parent) :
     int menuW = vCodecCtx->width/2;
     int menuH = vCodecCtx->height/2;
 
-  //  main->setXYWH(menuX,menuY,menuH,menuW);
+    recsWin->setXYWH(menuX,menuY,menuW,menuH);
+    recsWin->setRecordDir(recordFolder);
 
     int menu2W = menuW/4;
     sMenu->setXYWH(menuX,menuY,menu2W,menuH);
@@ -164,44 +227,88 @@ Widget::Widget(QWidget *parent) :
 
     sVis->setXYWH(menuX,menu3Y,menuW,menu3H);
 
+    recOps->setXYWH(menuX,menuY,menuW,menu3H);
+
     notes->setXYWH(400,15,200,100);
 
-
+    connect(sMenu,SIGNAL(toggleFB(bool)),this,SLOT(toggleFlashBack(bool)));
 
     connect(HCRateThread,SIGNAL(highCuts(bool)),this,SLOT(recHighCuts(bool)));
     connect(bsDetectThread,SIGNAL(isBlack(bool)),this,SLOT(recBS(bool)));
     connect(LDThread,SIGNAL(noLogo(bool)),this,SLOT(recNoLogo(bool)));
+
+    connect(HCRateThread2,SIGNAL(highCuts(bool)),this,SLOT(recHighCuts2(bool)));
+    connect(bsDetectThread2,SIGNAL(isBlack(bool)),this,SLOT(recBS2(bool)));
+    connect(LDThread2,SIGNAL(noLogo(bool)),this,SLOT(recNoLogo2(bool)));
+
 //    connect(capTimer,SIGNAL(timeout()),this,SLOT(drawMat2()));
     connect(playBackTimer,SIGNAL(timeout()),this,SLOT(playBackFromBuf()));
-    connect(this,SIGNAL(ldcrbufferFull()),this,SLOT(addFramesToThreads()));
-    connect(this,SIGNAL(bsbufferFull()),this,SLOT(addFramesToBSThread()));
+
+    connect(this,SIGNAL(ldcrbufferFull(bool)),this,SLOT(addFramesToThreads(bool)));
+    connect(this,SIGNAL(bsbufferFull(bool)),this,SLOT(addFramesToBSThread(bool)));
 
 
     connect(vThread,SIGNAL(sendData1(byte*)),this,SLOT(drawMat(byte*)));
     connect(vThread,SIGNAL(sendData2(byte*)),this,SLOT(drawMat2(byte*)));
+    connect(this,SIGNAL(breakVthread(bool)),vThread,SLOT(vThreadBreak(bool)));
+
+    connect(timer,SIGNAL(timeout()),this,SLOT(chkPrimaryForCB()));
+    connect(timer,SIGNAL(timeout()),this,SLOT(chkSecondaryForCB()));
+
+    connect(commercialTimer1,SIGNAL(timeout()),this,SLOT(chkPrimaryCutRate()));
+    connect(commercialTimer2,SIGNAL(timeout()),this,SLOT(chkSecondaryCutRate()));
+    connect(notesTimer,SIGNAL(timeout()),this,SLOT(closeNote()));
+
+
+    connect(sMenu,SIGNAL(showRecordings(bool)),recsWin,SLOT(setVisible(bool)));
+    connect(sMenu,SIGNAL(showRecordings(bool)),this,SLOT(changeToPIP(bool)));
+    connect(recsWin,SIGNAL(outofPIP(bool)),this,SLOT(changeToPIP(bool)));
+    connect(recsWin,SIGNAL(sendForPB(const char*)),this,SLOT(setUpPB(const char*)));
+
+    connect(sMenu,SIGNAL(showRecordingOpts(bool)),recOps,SLOT(setVisible(bool)));
+    connect(recOps,SIGNAL(primaryRecord(bool)),this,SLOT(recordPrimaryStream()));
+    connect(recOps,SIGNAL(secondaryRecord(bool)),this,SLOT(recordSecondaryStream()));
+    connect(recOps,SIGNAL(cancelRecording()),this,SLOT(cancelAllRecording()));
+
+    connect(capTimer,SIGNAL(timeout()),this,SLOT(drawMatCV()));
+
+
 
 
    matViewer = new cvMatViewer();
+   pipViewer = new cvMatViewer();
+   recsWin->setPIP(pipViewer);
 
    ui->graphicsView->scene()->addWidget(matViewer);
   // ui->graphicsView->scene()->addWidget(main);
    ui->graphicsView->scene()->addWidget(sMenu);
    ui->graphicsView->scene()->addWidget(sVis);
    ui->graphicsView->scene()->addWidget(notes);
+   ui->graphicsView->scene()->addWidget(recsWin);
+   ui->graphicsView->scene()->addWidget(recOps);
+
 
    connect(sVis,SIGNAL(sendPause(bool)),this,SLOT(setPaused(bool)));
    connect(sVis,SIGNAL(sendPlay(bool)),this,SLOT(setPlay(bool)));
 
+   notes->setTopText("Test Top");
+   notes->setBottomText("Test Bottom");
+   notes->updateTime();
 
    matViewer->show();
 
+   flashBackOn = true;
+
    vThread->start();
    playBackTimer->start();
+   timer->start();
+
+
 
 //   if(cap.isOpened()){
-//    //usingImShow();
-//   capTimer->start();
-//   playBackTimer->start();
+//   // usingImShow();
+//   //capTimer->start();
+//  // playBackTimer->start();
 //   }
 
 
@@ -212,7 +319,7 @@ Widget::~Widget()
 
     //cap.release();
 
-    qDebug() << mainBuffer.size();
+   // qDebug() << mainBuffer.size();
     ldBuffer.clear();
     bsBuffer.clear();
     crBuffer.clear();
@@ -232,6 +339,14 @@ Widget::~Widget()
     delete matViewer;
     delete sMenu;
     delete notes;
+
+    delete recPBThread;
+    delete vThread;
+
+    cap.release();
+
+    writer1.release();
+    writer2.release();
 
     avformat_free_context(formCtx1);
     avformat_free_context(formCtx2);
@@ -297,13 +412,13 @@ AVCodecContext* setCodecCtxFields(AVCodecContext *stream, AVCodecContext *enc){
     return enc;
 }
 
-void Widget::finishedPlaying(QAudio::State state){
-    qDebug() << state;
-         if (state == QAudio::IdleState) {
-             output->stop();
-             delete output;
-         }
-}
+//void Widget::finishedPlaying(QAudio::State state){
+//    qDebug() << state;
+//         if (state == QAudio::IdleState) {
+//             output->stop();
+//             delete output;
+//         }
+//}
 
 void Widget::encodeAndSave()
 {
@@ -363,12 +478,12 @@ void Widget::drawMat(byte *data)
 {
 
     Mat myFrame(rect.height()*2,rect.width()*2,CV_8UC3, data);
-    //frameStore.append(myFrame);
-    //fillBuffers(myFrame);
+
+    fillBuffers(myFrame,true);
     mainBuffer.append(myFrame);
+
+
     //matViewer->showImg(myFrame);
-
-
       //= (byte*)malloc(sizeof(data)*sizeof(byte));
    // dataHolder* hold = (dataHolder*)malloc(sizeof(dataHolder));
    // memcpy(&hold->data,&data,sizeof(data));
@@ -385,47 +500,45 @@ void Widget::drawMat2(byte* data)
 {
 
     Mat myFrame(rect.height()*2,rect.width()*2,CV_8UC3, data);
-    //frameStore.append(myFrame);
-    //fillBuffers(myFrame);
+    fillBuffers(myFrame,false);
     secondaryBuffer.append(myFrame);
-    //matViewer->showImg(myFrame);
 
-
-
-//  //  if(cap.isOpened()){
-//        Mat frame;
-//        Mat frame2;
-
-//        cap >> frame;
-
-//        if(!frame.empty()){
-
-//            frameStore.append(frame);
-//            fillBuffers(frame);
-
-//            mainBuffer2.append(nData);
-//           // mainBuffer.append(frame);
-//           // qDebug() << mainBuffer2.size();
-//            Size reSiz;
-//            reSiz.height = frame.rows/2;
-//            reSiz.width = frame.cols/2;
-
-
-
-//            //Mat temp;
-//            //cv::resize(frame,temp,reSiz);
-
-//            //matViewer->showImg(temp);
-
-//        }
-
-
-//   // }
 }
 
-void Widget::fillBuffers(Mat mat)
+void Widget::drawMatCV()
 {
+   Mat frame;
 
+   cap >> frame;
+
+
+
+   if(!isPIP){
+       Mat temp;
+
+       Size reSiz;
+       reSiz.height = rect.height();
+       reSiz.width = rect.width();
+
+       cv::resize(frame,temp,reSiz);
+       matViewer->showImg(temp);
+
+   }else{
+       Mat temp;
+
+       Size reSiz;
+       reSiz.height = 720/8;
+       reSiz.width = 1280/8;
+
+       cv::resize(frame,temp,reSiz);
+       pipViewer->showImg(temp);
+   }
+
+}
+
+void Widget::fillBuffers(Mat mat, bool primaryCh)
+{
+    if(primaryCh){
     if(toggle){
 
         Mat reSiz;
@@ -454,7 +567,7 @@ void Widget::fillBuffers(Mat mat)
     if(frameCounter % 50 == 0){
 
         if(toggle == true){
-            emit ldcrbufferFull();
+            emit ldcrbufferFull(true);
 
         }
 
@@ -466,10 +579,63 @@ void Widget::fillBuffers(Mat mat)
 
     if(frameCounter % 100 == 0){
         if(toggle2 == true){
-            emit bsbufferFull();
+            emit bsbufferFull(true);
         }
 
         toggle2 ^= true;
+    }
+
+    }else{
+
+        if(toggle3){
+
+            Mat reSiz;
+            sz.height = rect.height();
+            sz.width = rect.width();
+            cv::resize(mat,reSiz,sz);
+
+
+
+
+        ldBuffer2.append(mat);
+        crBuffer2.append(reSiz);
+        }
+
+        if(toggle4){
+            Mat reSiz;
+            sz.height = mat.rows/8;
+            sz.width = mat.cols/8;
+            cv::resize(mat,reSiz,sz);
+
+            bsBuffer2.append(reSiz);
+
+        }
+
+
+
+        frameCounter2++;
+
+        if(frameCounter2 % 50 == 0){
+
+            if(toggle3 == true){
+                emit ldcrbufferFull(false);
+
+            }
+
+
+            toggle3 ^= true;
+            //qDebug() << frameCounter << " " << toggle;
+            //qDebug() << bsBuffer.size();
+        }
+
+        if(frameCounter2 % 100 == 0){
+            if(toggle4 == true){
+                emit bsbufferFull(false);
+            }
+
+            toggle4 ^= true;
+        }
+
     }
 
 
@@ -488,65 +654,174 @@ void Widget::usingImShow()
         if(!frame.empty()){
 
             Size reSiz;
-            reSiz.height = frame.rows/2;
-            reSiz.width = frame.cols/2;
+            reSiz.height = rect.height()*2;
+            reSiz.width = rect.width()*2;
 
             Mat temp;
             cv::resize(frame,temp,reSiz);
 
+            Point p21((int)825, (int)575);
+            Point p22((int)1015, (int)650);
+            Rect rec(p21,p22);
+
+            Mat temp2 = temp(rec).clone();
+
+            //qDebug() << temp2.cols << " " << temp2.rows << " " << temp.cols << " " << temp.rows;
 
             imshow("Video",temp);
+            imshow("Logo",temp2);
+
+            if(i == 350)
+            imwrite("C:\\Users\\Rene\\Desktop\\LogoCW.jpg",temp2);
+
+           // imshow("Logo Frm File", logo);
+
+//            if(i == 350){
+//                Point p1((int)415,(int)290);
+//                Point p2((int)505,(int)320);
+//                Rect rec(p1,p2);
+//                Mat logo = temp(rec).clone();
+
+//                imwrite("C:\\Users\\Rene\\Desktop\\LogoCW.jpg",logo);
+
+//                //imshow("Logo",logo);
+//               // waitKey(0);
+//            }
         }
 
-        waitKey(5);
+        waitKey(1);
     }
 }
 
 void Widget::recHighCuts(bool rec)
 {
-   // qDebug() << "Cut Rates";
+
+    crPrimary = rec;
+
+    if(primaryOnComm && !crPrimary)
+        chkPrimaryForCB();
+
+   //  qDebug() << "Cut Rates1 " << crPrimary;
 }
 
 void Widget::recBS(bool rec)
 {
-    //qDebug() << "Black Screen";
+//    if(rec)
+//    qDebug() << "Black Screen";
+//    else
+//        qDebug() << "No Black Screen";
+    bsPrimary = rec;
 }
 
 void Widget::recNoLogo(bool rec)
-{
-   // qDebug() << "No Logo";
+{/*
+    if(rec)
+        qDebug() << "No Logo1";
+    else
+        qDebug() << "Logo 1";*/
+
+    ldPrimary = rec;
 }
 
-void Widget::addFramesToThreads()
+void Widget::recHighCuts2(bool rec)
+{
+   // qDebug() << "Cut Rates 2";
+
+    crSecondary = rec;
+
+    if(secondaryOnComm && !crSecondary)
+        chkSecondaryForCB();
+
+    //qDebug() << "Cut Rates 2 " << crSecondary;
+
+}
+
+void Widget::recBS2(bool rec)
+{
+//    if(rec)
+//    qDebug() << "Black Screen2";
+//    else
+//        qDebug() << "No Black Screen2";
+
+    bsSecondary = rec;
+}
+
+void Widget::recNoLogo2(bool rec)
+{
+//    if(rec)
+//        qDebug() << "No Logo 2";
+//    else
+//        qDebug() << "Logo 2";
+
+    ldSecondary = rec;
+}
+
+void Widget::addFramesToThreads(bool primaryCh)
 {
 
+    if(primaryCh){
     if(!HCRateThread->isRunning()){
        // qDebug() << "HC Thread";
         HCRateThread->addFrames(crBuffer);
-        //HCRateThread->start();
+        if(flashBackOn)
+        HCRateThread->start();
     }
 
 
 
     if(!LDThread->isRunning()){
       LDThread->addFrames(ldBuffer);
-     // LDThread->start();
+      if(flashBackOn)
+      LDThread->start();
     }
 
     crBuffer.clear();
     ldBuffer.clear();
+
+    }else{
+        if(!HCRateThread2->isRunning()){
+           // qDebug() << "HC Thread";
+            HCRateThread2->addFrames(crBuffer2);
+            if(flashBackOn)
+            HCRateThread2->start();
+        }
+
+
+
+        if(!LDThread2->isRunning()){
+          LDThread2->addFrames(ldBuffer2);
+          if(flashBackOn)
+          LDThread2->start();
+        }
+
+        crBuffer2.clear();
+        ldBuffer2.clear();
+
+
+    }
 }
 
-void Widget::addFramesToBSThread()
+void Widget::addFramesToBSThread(bool primaryCh)
 {
-
+    if(primaryCh){
     if(!bsDetectThread->isRunning()){
         //qDebug() << "BS Thread";
         bsDetectThread->readInFrames(bsBuffer);
-        //bsDetectThread->start();
+        if(flashBackOn)
+        bsDetectThread->start();
     }
 
      bsBuffer.clear();
+    }else{
+        if(!bsDetectThread2->isRunning()){
+            //qDebug() << "BS Thread";
+            bsDetectThread2->readInFrames(bsBuffer2);
+            if(flashBackOn)
+            bsDetectThread2->start();
+        }
+
+         bsBuffer2.clear();
+    }
 }
 
 void Widget::playBackFromBuf()
@@ -554,45 +829,280 @@ void Widget::playBackFromBuf()
 
 
     //if(isPaused == false){
+
+ if(!isPIP){
     if(primary){
-    if(!mainBuffer.isEmpty()){
+        if(!mainBuffer.isEmpty()){
 
-        Size reSiz;
-        reSiz.height = rect.height();
-        reSiz.width = rect.width();
-
-
-
-        //Mat temp(rect.height()*2, rect.width()*2, CV_8UC3,(byte*)tempD->data);
-        Mat temp = mainBuffer.at(0);
-        Mat temp2;
-        cv::resize(temp,temp2,reSiz);
-        matViewer->showImg(temp2);
-      //  qDebug() << playBackIndex;
-
-       // playBackIndex++;
-
-    }
-    }else{
-        if(!secondaryBuffer.isEmpty()){
             Size reSiz;
             reSiz.height = rect.height();
             reSiz.width = rect.width();
 
 
+            Mat temp = mainBuffer.at(0);
 
-            //Mat temp(rect.height()*2, rect.width()*2, CV_8UC3,(byte*)tempD->data);
-            Mat temp = secondaryBuffer.at(0);
+
+
             Mat temp2;
             cv::resize(temp,temp2,reSiz);
             matViewer->showImg(temp2);
 
+            if(primeRec && !primaryOnComm){
+                writer1 << temp2;
+            }
+
+
+        }
+        }else{
+            if(!secondaryBuffer.isEmpty()){
+                Size reSiz;
+                reSiz.height = rect.height();
+                reSiz.width = rect.width();
+
+
+
+                Mat temp = secondaryBuffer.at(0);
+                Mat temp2;
+                cv::resize(temp,temp2,reSiz);
+                matViewer->showImg(temp2);
+
+                if(secRec && !secondaryOnComm){
+                    writer2 << temp2;
+                }
+
+
+            }
+
+        }
+}
+    else{
+        if(primary){
+            if(!mainBuffer.isEmpty()){
+
+                Size reSiz;
+                reSiz.height = 720/8;
+                reSiz.width = 1280/8;
+
+
+                Mat temp = mainBuffer.at(0);
+
+                if(primeRec && !primaryOnComm){
+                    writer1 << temp;
+                }
+
+
+                Mat temp2;
+                cv::resize(temp,temp2,reSiz);
+                pipViewer->showImg(temp2);
+
+
+        }
+        }else{
+            if(!secondaryBuffer.isEmpty()){
+                Size reSiz;
+                reSiz.height = 720/8;
+                reSiz.width = 1280/8;
+
+
+
+                Mat temp = secondaryBuffer.at(0);
+
+                if(secRec && !secondaryOnComm){
+                    writer2 << temp;
+                }
+
+                Mat temp2;
+                cv::resize(temp,temp2,reSiz);
+                pipViewer->showImg(temp2);
+
+
+            }
+    }
+}
+
+
+}
+
+void Widget::chkPrimaryForCB()
+{
+    if(primaryOnComm == false){
+
+    if(ldPrimary && bsPrimary){
+      //  qDebug() << "Primary on Commercial";
+        primaryOnComm = true;
+
+        if(!secondaryOnComm){
+            notes->setTopText("Switching to Secondary");
+            notes->setBottomText("Primary on Commercial Break at");
+            notes->updateTime();
+            notes->setVisible(true);
+            notesTimer->start();
+            //Switching to secondary channel
+        }
+
+
+        }
+
+    }else{
+
+        if(!ldPrimary && !bsPrimary && !crPrimary){
+          //  qDebug() << "Primary on programming";
+            primaryOnComm = false;
+
+            if(!primary){
+
+                notes->setTopText("Switching to Primary");
+                notes->setBottomText("Primary on Commercial Break at");
+                notes->updateTime();
+                notes->setVisible(true);
+                notesTimer->start();
+                //notify that primary stream is off commercial and switch
+            }
+
+
+        }
+
+
+    }
+
+
+}
+
+void Widget::chkSecondaryForCB()
+{
+
+    if(secondaryOnComm == false){
+     if(ldSecondary && bsSecondary){
+        qDebug() << "Secondary on Commercial";
+       secondaryOnComm = true;
+
+       if(primary){
+           notes->setTopText("Secondary Update");
+           notes->setBottomText("Secondary on Commercial Break at");
+           notes->updateTime();
+           notes->setVisible(true);
+           notesTimer->start();
+           //notify secondary channel is on commercial
+       }
+
+
+
+
+        }
+
+    }else{
+        if(!ldSecondary && !bsSecondary && !crSecondary){
+       // qDebug() << "Secondary on programming";
+        secondaryOnComm = false;
+
+        if(primary){
+            notes->setTopText("Secondary Update");
+            notes->setBottomText("Secondary is off Commercial Break at");
+            notes->updateTime();
+            notes->setVisible(true);
+            notesTimer->start();
+            //notify secondary channel is off commercial
         }
 
     }
-   // }
+    }
 
 
+
+}
+
+void Widget::chkPrimaryCutRate()
+{
+    //qDebug() << "Cut Rate Timer1 Time out";
+    if(!crPrimary){
+       // qDebug() << "Regular Cut Rate 1";
+        chkPrimaryForCB();
+    }
+}
+
+void Widget::chkSecondaryCutRate()
+{
+     //qDebug() << "Cut Rate Timer2 Time out";
+    if(!crSecondary){
+       // qDebug() << "Regular Cut Rate 2";
+        chkSecondaryForCB();
+    }
+}
+
+void Widget::toggleFlashBack(bool on)
+{
+    if(on){
+        HCRateThread->start();
+        HCRateThread2->start();
+
+        bsDetectThread->start();
+        bsDetectThread2->start();
+
+        LDThread->start();
+        LDThread2->start();
+
+      //  qDebug() << "FB on";
+
+        flashBackOn = true;
+
+        timer->start();
+
+    }else{
+        HCRateThread->quit();
+        HCRateThread2->quit();
+
+        bsDetectThread->quit();
+        bsDetectThread2->quit();
+
+        LDThread->quit();
+        LDThread2->quit();
+       // qDebug() << "FB off";
+        //also add a graphic that Flashback is off
+        flashBackOn = false;
+        timer->stop();
+    }
+}
+
+void Widget::changeToPIP(bool inPIP)
+{
+    this->isPIP = inPIP;
+    //qDebug() << inPIP;
+
+}
+
+void Widget::recordPrimaryStream()
+{
+    Size sz;
+    sz.height = rect.height();
+    sz.width = rect.width();
+
+    writer1.open(recordFolder.toStdString() + "/PrimaryStream.avi",CV_FOURCC('M','P','E','G'),vid1FPS,sz,true);
+
+    if(!writer1.isOpened()){
+        qDebug() << "Failed to open writer";
+    }else{
+        //qDebug() << "Opened";
+        primeRec = true;
+    }
+
+
+}
+
+void Widget::recordSecondaryStream()
+{
+    Size sz;
+    sz.height = rect.height();
+    sz.width = rect.width();
+
+   // string secPath = recordFolder.toStdString();
+    writer2.open(recordFolder.toStdString() + "/SecondaryStream.avi",CV_FOURCC('M','P','E','G'),vid2FPS,sz,true);
+
+    if(!writer2.isOpened()){
+        qDebug() << "Failed to open writer";
+    }else{
+       // qDebug() << "Opened";
+        secRec = true;
+    }
 }
 
 
@@ -616,6 +1126,18 @@ void Widget::setPlay(bool isPlay)
     playBackTimer->start();
 }
 
+void Widget::closeNote()
+{
+    notes->setVisible(false);
+
+    if(primaryOnComm)
+        primary = false;
+
+    if(!primaryOnComm)
+        primary = true;
+
+}
+
 void Widget::keyPressEvent(QKeyEvent *a)
 {
     //Do a switch here with a char to determine which key was pressed...
@@ -629,7 +1151,6 @@ void Widget::keyPressEvent(QKeyEvent *a)
 
     case 65:
         mtoggle ^= true;
-        //main->setVisible(mtoggle);
         break;
 
     case 66:
@@ -651,6 +1172,95 @@ void Widget::keyPressEvent(QKeyEvent *a)
         primary ^=true;
         break;
 
+    case 96:
+        isPIP = false;
+
+        recOps->setVisible(false);
+        recsWin->setVisible(false);
+        break;
+
+
 
     }
+}
+
+
+void Widget::cancelAllRecording()
+{
+    primeRec = false;
+    secRec = false;
+
+    writer1.release();
+    writer2.release();
+
+
+}
+
+void Widget::setUpPB(const char *playBack)
+{
+   // AVFormatContext *rPBFormCtx = NULL;
+
+    qDebug() << playBack;
+
+//    if(avformat_open_input(&rPBFormCtx,playBack,NULL,NULL) != 0){
+//        qDebug() << "Did not open video";
+//    }
+
+
+//    if(avformat_find_stream_info(rPBFormCtx,NULL) < 0){
+//        qDebug() << "Couldn't find stream info";
+//    }
+
+//    av_dump_format(rPBFormCtx,0,playBack,0);
+
+
+//    recPBThread = new RecordPlayBack(rPBFormCtx);
+
+//    connect(recPBThread,SIGNAL(sendFrameRecording(byte*)),this,SLOT(drawMat(byte*)));
+
+//    if(cap.isOpened())
+//    cap.release();
+
+
+    HCRateThread->quit();
+    HCRateThread2->quit();
+    LDThread->quit();
+    LDThread2->quit();
+    bsDetectThread->quit();
+    bsDetectThread2->quit();
+
+   // vThread->exit();
+    emit breakVthread(true);
+    while(vThread->isRunning()){
+
+        qDebug() << "Vthread is running";
+    }
+   // delete vThread;
+
+    timer->stop();
+    playBackTimer->stop();
+    primary = true;
+    flashBackOn = false;
+
+    if(!vThread->isRunning()){
+       // emit breakVthread(false);
+
+        if(cap.isOpened()){
+            capTimer->stop();
+            cap.release();
+        }
+
+        cap.open(playBack);
+        if(cap.isOpened()){
+        capTimer->setInterval(1000/30);
+        capTimer->start();
+        }else{
+            qDebug() << "Could not open Recording";
+            emit breakVthread(false);
+            vThread->start();
+            playBackTimer->start();
+        }
+        //drawMatCV();
+    }
+
 }

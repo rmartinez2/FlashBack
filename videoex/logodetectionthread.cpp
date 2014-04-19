@@ -14,11 +14,21 @@ logoDetectionThread::logoDetectionThread(QVector<QImage> samples, QObject *paren
 logoDetectionThread::logoDetectionThread(QObject *parent):
     QThread(parent)
 {
+}
+
+void logoDetectionThread::run()
+{
+
+//    Point p1((int)900, (int)500);
+//    Point p2((int)1100, (int)700);
+
     scale = 1;
     delta = 0;
     ddepth = CV_16S;
 
-    logoMat = imread("C:\\Users\\Rene\\Desktop\\LogoTheMiddleLg.jpg");
+    Rect box(p1,p2);
+
+    logoMat = imread(fileName);
 
     GaussianBlur(logoMat,logoGray,Size(3,3),0,0,BORDER_DEFAULT);
     cvtColor(logoGray,logoGray,CV_BGR2GRAY);
@@ -31,16 +41,6 @@ logoDetectionThread::logoDetectionThread(QObject *parent):
 
     addWeighted(absGradX,0.5,absGradY,0.5,0,gradLogo);
 
-}
-
-void logoDetectionThread::run()
-{
-
-    Point p1((int)900, (int)500);
-    Point p2((int)1100, (int)700);
-
-    Rect box(p1,p2);
-
     int sum = 0;
 
     /*IplImage newLogo = gradLogo;
@@ -52,6 +52,8 @@ void logoDetectionThread::run()
     for(int i = 0; i < myMats.size(); i++){
         Mat temp = myMats.at(i);
         Mat cpy = temp(box).clone();
+
+        //imshow("Show Me", temp);
 
 
         GaussianBlur(cpy,cpy,Size(3,3), 0, 0, BORDER_DEFAULT);
@@ -83,9 +85,9 @@ void logoDetectionThread::run()
             }
         }
 
-        //qDebug() << sum;
+       // qDebug() << sum;
 
-        if(sum > 200000){
+        if(sum > 115000){
 
             emit noLogo(true);
           //qDebug() << "Logo has disappeared";
@@ -122,6 +124,17 @@ void logoDetectionThread::setLogoLoc(int x1, int y1, int x2, int y2)
 
     this->x2 = x2;
     this->y2 = y2;
+}
+
+void logoDetectionThread::setLogoLoc(Point p1, Point p2)
+{
+    this->p1 = p1;
+    this->p2 = p2;
+}
+
+void logoDetectionThread::setLogo(const char* fileName)
+{
+    this->fileName = fileName;
 }
 
 
