@@ -11,7 +11,7 @@
 #include <QVector>
 #include <QMutexLocker>
 #include <QImageReader>
-#include <QtOpenGL/QGLWidget>
+
 
 
 
@@ -98,8 +98,8 @@ signals:
     void tFinished();
     void sendQImg(QImage);
     void sendMat(Mat);
-    void sendData1(byte* data);
-    void sendData2(byte* data);
+    void sendData1(uint8_t* data);
+    void sendData2(uint8_t* data);
     
 public slots:
     void initVideoFrame();

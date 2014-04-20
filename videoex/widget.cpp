@@ -26,11 +26,15 @@ Widget::Widget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::Widget)
 {
+
+
     ui->setupUi(this);
 
     this->window()->setWindowTitle("FlashBack");
 
     av_register_all();
+
+
 
     setUpGView();
 
@@ -62,6 +66,7 @@ Widget::Widget(QWidget *parent) :
      secondaryOnComm = false;
 
 
+
     playBackIndex = 0;
 
     ui->graphicsView->setAlignment(Qt::AlignLeft | Qt::AlignTop);
@@ -78,6 +83,8 @@ Widget::Widget(QWidget *parent) :
     notesTimer->setSingleShot(true);
     notesTimer->setInterval(5000);
 
+    formCtx1 = NULL;
+    formCtx2 = NULL;
 
     const char* filename = "C:\\Users\\Rene\\Desktop\\Test.mp2";
     char* Path = "C:\\Users\\Rene\\Desktop\\L&O.mpg";
@@ -100,7 +107,7 @@ Widget::Widget(QWidget *parent) :
     }
 
     av_dump_format(formCtx1,0,"C:\\Users\\Rene\\Desktop\\L&O.mpg",0);
-
+qDebug() << "here";
     if(avformat_open_input(&formCtx2,"C:\\Users\\Rene\\Desktop\\EyeForEye.mpg",NULL,NULL) != 0){
         qDebug() << "Did not open vide2";
     }
@@ -157,6 +164,8 @@ Widget::Widget(QWidget *parent) :
         QRect rect3;
         rect3.setHeight(rect.height() + 7);
         rect3.setWidth(rect.width() + 7);
+
+
         ui->graphicsView->setGeometry(rect3);
         this->setGeometry(rect3);
 
@@ -345,8 +354,8 @@ Widget::~Widget()
 
     cap.release();
 
-    writer1.release();
-    writer2.release();
+    //writer1.release();
+    //writer2.release();
 
     avformat_free_context(formCtx1);
     avformat_free_context(formCtx2);
@@ -474,7 +483,7 @@ void Widget::setUpGView()
     ui->graphicsView->setScene(myScene);
 }
 
-void Widget::drawMat(byte *data)
+void Widget::drawMat(uint8_t *data)
 {
 
     Mat myFrame(rect.height()*2,rect.width()*2,CV_8UC3, data);
@@ -496,7 +505,7 @@ void Widget::drawMat(byte *data)
 
 }
 
-void Widget::drawMat2(byte* data)
+void Widget::drawMat2(uint8_t *data)
 {
 
     Mat myFrame(rect.height()*2,rect.width()*2,CV_8UC3, data);
@@ -1190,8 +1199,8 @@ void Widget::cancelAllRecording()
     primeRec = false;
     secRec = false;
 
-    writer1.release();
-    writer2.release();
+    //writer1.release();
+    //writer2.release();
 
 
 }

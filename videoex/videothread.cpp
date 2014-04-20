@@ -248,11 +248,11 @@ void VideoThread::allocRGBPic()
 {
 
     int numBgrBytes = avpicture_get_size(AV_PIX_FMT_BGR24,vCodecCtx1->width, vCodecCtx1->height);
-    byte *bufBGR = (byte*)av_malloc(numBgrBytes*sizeof(byte));
+    uint8_t *bufBGR = (uint8_t*)av_malloc(numBgrBytes*sizeof(uint8_t));
     int chek2 = avpicture_fill((AVPicture*)bgrFrame,bufBGR,AV_PIX_FMT_BGR24,vCodecCtx1->width,vCodecCtx1->height);
 
     int numBgrBytes2 = avpicture_get_size(AV_PIX_FMT_BGR24,vCodecCtx1->width, vCodecCtx1->height);
-    byte *bufBGR2 = (byte*)av_malloc(numBgrBytes2*sizeof(byte));
+    uint8_t *bufBGR2 = (uint8_t*)av_malloc(numBgrBytes2*sizeof(uint8_t));
     int chek3 = avpicture_fill((AVPicture*)bgrFrame2,bufBGR2,AV_PIX_FMT_BGR24,vCodecCtx1->width,vCodecCtx1->height);
 
 
@@ -362,7 +362,7 @@ void VideoThread::setRecDstInts()
 void VideoThread::allocBGRPic()
 {
     int numBgrBytes = avpicture_get_size(AV_PIX_FMT_BGR24,rCodecCtx->width, rCodecCtx->height);
-    byte *bufBGR = (byte*)av_malloc(numBgrBytes*sizeof(byte));
+    uint8_t *bufBGR = (uint8_t*)av_malloc(numBgrBytes*sizeof(uint8_t));
     int chek = avpicture_fill((AVPicture*)rBGRFrame,bufBGR,AV_PIX_FMT_BGR24,rCodecCtx->width,rCodecCtx->height);
 
     if(chek < 0){

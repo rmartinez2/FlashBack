@@ -1,7 +1,7 @@
 #ifndef SIDEMENU_H
 #define SIDEMENU_H
 
-#include <QWidget>
+#include <QtGui>
 #include <QPainter>
 #include <QPushButton>
 

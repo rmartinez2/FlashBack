@@ -1,7 +1,7 @@
 #ifndef RECORDINGS_H
 #define RECORDINGS_H
 
-#include <QWidget>
+#include <QtGui/QWidget>
 #include <QDir>
 #include <QFileInfoList>
 #include <QPainter>

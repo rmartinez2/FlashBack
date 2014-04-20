@@ -1,12 +1,13 @@
 #ifndef MAINMENU_H
 #define MAINMENU_H
 
-#if QT_VERSION >= 0x050000
-#include <QtWidgets>
-#else
-#include <QtGui>
-#endif
+//#if QT_VERSION >= 0x050000
+//#include <QtWidgets>
+//#else
+//#include <QtGui>
+//#endif
 
+#include <QtGui>
 
 #include <QtCore>
 #include <QPainter>
@@ -19,8 +20,6 @@ public:
 
   QSize sizeHint();
   void paintEvent(QPaintEvent *event);
-
-
 
   bool toggle;
   int w,h;

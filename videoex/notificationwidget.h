@@ -1,7 +1,7 @@
 #ifndef NOTIFICATIONWIDGET_H
 #define NOTIFICATIONWIDGET_H
 
-#include <QWidget>
+#include <QtGui>
 #include <QPainter>
 #include <QString>
 #include <QSize>

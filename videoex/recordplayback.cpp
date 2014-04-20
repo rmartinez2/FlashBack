@@ -118,7 +118,7 @@ void RecordPlayBack::setDstInts()
 void RecordPlayBack::allocBGRPic()
 {
     int numBgrBytes = avpicture_get_size(AV_PIX_FMT_BGR24,vCodecCtx->width, vCodecCtx->height);
-    byte *bufBGR = (byte*)av_malloc(numBgrBytes*sizeof(byte));
+    uint8_t *bufBGR = (uint8_t*)av_malloc(numBgrBytes*sizeof(uint8_t));
     int chek = avpicture_fill((AVPicture*)bgrFrame,bufBGR,AV_PIX_FMT_BGR24,vCodecCtx->width,vCodecCtx->height);
 
     if(chek < 0){

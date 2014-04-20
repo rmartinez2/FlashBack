@@ -1,7 +1,7 @@
 #ifndef RECORDINGOPTIONS_H
 #define RECORDINGOPTIONS_H
 
-#include <QWidget>
+#include <QtGui>
 #include <QPushButton>
 #include <QPainter>
 

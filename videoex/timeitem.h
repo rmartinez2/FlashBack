@@ -5,7 +5,7 @@
 #include <QPainter>
 #include <time.h>
 
-class timeItem : public QObject, public QGraphicsTextItem
+class timeItem : public QGraphicsTextItem
 {
 public:
     timeItem(bool begin);

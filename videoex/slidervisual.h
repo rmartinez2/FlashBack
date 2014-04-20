@@ -1,7 +1,7 @@
 #ifndef SLIDERVISUAL_H
 #define SLIDERVISUAL_H
 
-#include <QWidget>
+#include <QtGui>
 #include <QPainter>
 #include <QPushButton>
 #include <QIcon>

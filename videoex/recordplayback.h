@@ -43,7 +43,7 @@ public:
     void run();
     
 signals:
-    void sendFrameRecording(byte* data);
+    void sendFrameRecording(uint8_t* data);
     
 public slots:
     void initVideoFrame();

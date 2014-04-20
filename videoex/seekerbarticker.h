@@ -13,6 +13,7 @@
 class seekerBarTicker : public QObject, public QGraphicsItem
 {
     Q_OBJECT
+    Q_INTERFACES(QGraphicsItem)
 public:
     seekerBarTicker(int minute);
 

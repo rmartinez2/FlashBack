@@ -1,7 +1,8 @@
 #ifndef WIDGET_H
 #define WIDGET_H
 
-#include <QWidget>
+#include <QtGui>
+
 #include <QKeyEvent>
 #include <QtCore>
 #include <QGraphicsView>
@@ -39,7 +40,7 @@
 #include "recordings.h"
 
 typedef struct dataHolder{
-    byte* data;
+    uint8_t* data;
 }dataHolder;
 
 
@@ -219,8 +220,8 @@ public slots:
 
    void setImgLab(QPixmap pix);
    void setUpGView();
-   void drawMat(byte* data);
-   void drawMat2(byte *data);
+   void drawMat(uint8_t* data);
+   void drawMat2(uint8_t *data);
    void drawMatCV();
    void fillBuffers(Mat mat, bool primaryCh);
    void usingImShow();
